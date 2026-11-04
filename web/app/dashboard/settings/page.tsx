@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { CheckCircle2, KeyRound, Lock, PlugZap, Ruler, ShieldAlert, XCircle } from 'lucide-react';
+import { AudioLines, CheckCircle2, KeyRound, Lock, Mail, Palette, PlugZap, Ruler, ShieldAlert, Sparkles, XCircle } from 'lucide-react';
 import { post, put, useApi } from '@/lib/api';
 import type { Config } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -68,7 +68,8 @@ export default function SettingsPage() {
   const testMail = async () => { try { const r = await post<{ ok: boolean; message: string }>('/api/app-settings/test', { what: 'email' }); r.ok ? toast.success(r.message) : toast.error(r.message); } catch (e: any) { toast.error(e.message); } };
 
   const groups = [...(s?.groups || []), { id: 'rubric', title: 'Scoring rubric', help: '' }];
-  const icon = (id: string) => id === 'security' ? Lock : id === 'safety' ? ShieldAlert : id === 'rubric' ? Ruler : KeyRound;
+  const ICONS: Record<string, typeof KeyRound> = { brand: Palette, voice: AudioLines, safety: ShieldAlert, email: Mail, ai: Sparkles, security: Lock, rubric: Ruler };
+  const icon = (id: string) => ICONS[id] || KeyRound;
   const current = groups.find(g => g.id === group);
 
   return (

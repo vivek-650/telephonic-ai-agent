@@ -80,7 +80,7 @@ export default function CandidatePage({ params }: { params: Promise<{ id: string
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          {tab === 'overview' && <><Rejection c={c} onChange={refresh} /><Verdict c={c} /><AiAnalysis id={id} suite={suite} onChange={refresh} /><ScoreBreakdown c={c} /></>}
+          {tab === 'overview' && <><Verdict c={c} /><Rejection c={c} onChange={refresh} /><ScoreBreakdown c={c} /><AiAnalysis id={id} suite={suite} onChange={refresh} /></>}
           {tab === 'interview' && <><Interviews c={c} onChange={refresh} /><InterviewKit id={id} /></>}
           {tab === 'hiring' && (suite ? <><HumanInterviews c={c} suite={suite} onChange={refresh} /><Offers c={c} suite={suite} onChange={refresh} /><Onboarding suite={suite} onChange={refresh} /><References c={c} suite={suite} onChange={refresh} /><Messages c={c} suite={suite} onChange={refresh} /></> : <Skeleton className="h-64 rounded-xl" />)}
           {tab === 'activity' && <><Timeline c={c} onChange={refresh} /><ScoreAudit c={c} /></>}
@@ -92,7 +92,7 @@ export default function CandidatePage({ params }: { params: Promise<{ id: string
             <CardHeader title="Application" />
             <CardBody>
               <DefinitionList items={[
-                ['Experience', c.years != null ? `${c.years} years` : '—'],
+                ['Experience', c.years != null ? `${c.years} year${c.years === 1 ? '' : 's'}` : '—'],
                 ['Notice period', c.notice_days != null ? `${c.notice_days} days` : '—'],
                 ['Expected salary', c.expected_salary != null ? `${fmtMoney(c.expected_salary)} / month` : '—'],
                 ['Skills', c.skills || '—'],

@@ -46,7 +46,7 @@ export function Histogram({ data, height = 180, color = 'var(--accent)' }: { dat
         <XAxis dataKey="label" {...axis} />
         <YAxis allowDecimals={false} {...axis} />
         <Tooltip cursor={{ fill: 'var(--surface-2)' }} content={<TooltipBox />} />
-        <Bar dataKey="n" name="Candidates" fill={color} radius={[4, 4, 0, 0]} maxBarSize={44} />
+        <Bar dataKey="n" name="Candidates" fill={color} radius={[4, 4, 0, 0]} maxBarSize={44} isAnimationActive={false} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -60,7 +60,7 @@ export function GroupedBars({ data, keys, height = 220 }: { data: Record<string,
         <XAxis dataKey="name" {...axis} interval={0} tickFormatter={(v: string) => (v.length > 16 ? v.slice(0, 15) + '…' : v)} />
         <YAxis allowDecimals={false} {...axis} />
         <Tooltip cursor={{ fill: 'var(--surface-2)' }} content={<TooltipBox />} />
-        {keys.map((k, i) => <Bar key={k.key} dataKey={k.key} name={k.label} fill={PALETTE[i]} radius={[3, 3, 0, 0]} maxBarSize={18} />)}
+        {keys.map((k, i) => <Bar key={k.key} dataKey={k.key} name={k.label} fill={PALETTE[i]} radius={[3, 3, 0, 0]} maxBarSize={18} isAnimationActive={false} />)}
       </BarChart>
     </ResponsiveContainer>
   );
@@ -73,7 +73,7 @@ export function Donut({ data, height = 180 }: { data: { label: string; n: number
       <div className="relative shrink-0" style={{ width: height, height }}>
         <ResponsiveContainer>
           <PieChart>
-            <Pie data={data} dataKey="n" nameKey="label" innerRadius="66%" outerRadius="100%" paddingAngle={2} stroke="none">
+            <Pie data={data} dataKey="n" nameKey="label" innerRadius="66%" outerRadius="100%" paddingAngle={2} stroke="none" isAnimationActive={false}>
               {data.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
             </Pie>
             <Tooltip content={<TooltipBox />} />
