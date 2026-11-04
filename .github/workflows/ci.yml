@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['22.13', '22.x', '24.x']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install pdftotext (resume upload tests)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
+      - name: Syntax check
+        run: npm run check
+      - name: Unit tests
+        run: npm run test:unit
+      - name: End-to-end tests (mock voice engine)
+        run: npm run test:e2e
+      - name: Interview pipeline evals
+        run: npm run eval
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+      - run: npm run coverage
+      - name: Eval report
+        run: npm run eval -- --json > eval-report.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: eval-report.json
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t recruiter-os:ci .
+      - name: Boot and probe health
+        run: |
+          docker run -d --name app -p 4870:4870 recruiter-os:ci
+          for i in $(seq 1 20); do curl -fs localhost:4870/api/health && exit 0; sleep 1; done
+          docker logs app; exit 1
