@@ -1,0 +1,408 @@
+{
+  "jobs": {
+    "sales": {
+      "title": "Inside Sales Executive",
+      "company": "Northwind",
+      "location": "Pune",
+      "min_years": 2,
+      "max_salary": 60000,
+      "max_notice_days": 30,
+      "locations": [
+        "pune",
+        "mumbai"
+      ],
+      "must_skills": [
+        "crm",
+        "cold calling",
+        "english"
+      ],
+      "negotiable": 1,
+      "stretch_pct": 10
+    },
+    "support": {
+      "title": "Customer Support Lead",
+      "company": "Northwind",
+      "location": "Bengaluru",
+      "min_years": 4,
+      "max_salary": 90000,
+      "max_notice_days": 45,
+      "locations": [
+        "bengaluru",
+        "bangalore"
+      ],
+      "must_skills": [
+        "team lead",
+        "zendesk",
+        "sla"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "id": "strong-specific",
+      "job": "sales",
+      "form": {
+        "city": "Pune",
+        "years": 3,
+        "skills": "CRM, cold calling, English"
+      },
+      "said": {
+        "years_experience": "about three years",
+        "notice_period": "two weeks",
+        "expected_salary": "50k",
+        "relocation_ok": "yes, I live in Pune",
+        "skill_example": "I made 80 cold calls a day in HubSpot CRM and booked 22 demos last quarter, the top number on my team of 9."
+      },
+      "expect": {
+        "years_experience": 3,
+        "notice_days": 14,
+        "expected_salary": 50000,
+        "relocation_ok": true,
+        "verdict": "Strong"
+      }
+    },
+    {
+      "id": "salary-knockout",
+      "job": "sales",
+      "form": {
+        "city": "Pune",
+        "years": 4,
+        "skills": "CRM, cold calling"
+      },
+      "said": {
+        "years_experience": "4 years",
+        "notice_period": "30 days",
+        "expected_salary": "1.2 lakh per month",
+        "relocation_ok": "yes",
+        "skill_example": "I ran outbound for a SaaS startup and grew demos from 20 to 45 a month."
+      },
+      "expect": {
+        "years_experience": 4,
+        "notice_days": 30,
+        "expected_salary": 120000,
+        "relocation_ok": true,
+        "verdict": "Reject",
+        "flag": "Salary expectation more than 30% over budget"
+      }
+    },
+    {
+      "id": "location-knockout",
+      "job": "sales",
+      "form": {
+        "city": "Delhi",
+        "years": 3,
+        "skills": "CRM, cold calling, English"
+      },
+      "said": {
+        "years_experience": "3",
+        "notice_period": "one month",
+        "expected_salary": "55,000 per month",
+        "relocation_ok": "No, I can't move to Pune",
+        "skill_example": "I booked 30 demos a month using Salesforce CRM and cold calling."
+      },
+      "expect": {
+        "years_experience": 3,
+        "notice_days": 30,
+        "expected_salary": 55000,
+        "relocation_ok": false,
+        "verdict": "Reject",
+        "flag": "Cannot work from the job location"
+      }
+    },
+    {
+      "id": "experience-knockout",
+      "job": "support",
+      "form": {
+        "city": "Bengaluru",
+        "years": 1,
+        "skills": "Zendesk"
+      },
+      "said": {
+        "years_experience": "one year",
+        "notice_period": "immediately",
+        "expected_salary": "40k",
+        "relocation_ok": "yes",
+        "skill_example": "I answered tickets in Zendesk."
+      },
+      "expect": {
+        "years_experience": 1,
+        "notice_days": 0,
+        "expected_salary": 40000,
+        "relocation_ok": true,
+        "verdict": "Reject"
+      }
+    },
+    {
+      "id": "vague-but-fits",
+      "job": "sales",
+      "form": {
+        "city": "Pune",
+        "years": 3,
+        "skills": "CRM, cold calling, English"
+      },
+      "said": {
+        "years_experience": "three years",
+        "notice_period": "15 days",
+        "expected_salary": "50000",
+        "relocation_ok": "yes",
+        "skill_example": "I did sales and talked to customers. It was good."
+      },
+      "expect": {
+        "years_experience": 3,
+        "notice_days": 15,
+        "expected_salary": 50000,
+        "relocation_ok": true,
+        "verdict": "Maybe",
+        "flag": "Vague: no numbers or results given"
+      }
+    },
+    {
+      "id": "lpa-parsing",
+      "job": "sales",
+      "form": {
+        "city": "Mumbai",
+        "years": 2,
+        "skills": "CRM, English"
+      },
+      "said": {
+        "years_experience": "2 years",
+        "notice_period": "45 days",
+        "expected_salary": "6 LPA",
+        "relocation_ok": "yes",
+        "skill_example": "I made 60 cold calls a day and closed 12 deals worth 18 lakh in six months."
+      },
+      "expect": {
+        "years_experience": 2,
+        "notice_days": 45,
+        "expected_salary": 50000,
+        "relocation_ok": true,
+        "verdict": "Maybe"
+      },
+      "note": "45-day notice is over the 30-day limit: a recruiter would want a look, not an auto-shortlist"
+    },
+    {
+      "id": "bare-lakhs-yearly",
+      "job": "sales",
+      "form": {
+        "city": "Pune",
+        "years": 5,
+        "skills": "CRM, cold calling, English"
+      },
+      "said": {
+        "years_experience": "five years",
+        "notice_period": "one month",
+        "expected_salary": "10 lakhs",
+        "relocation_ok": "yes",
+        "skill_example": "I led a team of 6 reps, we increased conversion by 30 percent and booked 40 demos a month in HubSpot CRM."
+      },
+      "expect": {
+        "years_experience": 5,
+        "notice_days": 30,
+        "expected_salary": 83333,
+        "relocation_ok": false,
+        "verdict": "Reject",
+        "flag": "Salary expectation more than 30% over budget",
+        "skip": [
+          "relocation_ok"
+        ]
+      }
+    },
+    {
+      "id": "months-of-experience",
+      "job": "sales",
+      "form": {
+        "city": "Pune",
+        "years": 2,
+        "skills": "cold calling, English"
+      },
+      "said": {
+        "years_experience": "18 months",
+        "notice_period": "2 weeks",
+        "expected_salary": "45k",
+        "relocation_ok": "yes I am in Pune already",
+        "skill_example": "I made 70 cold calls a day and booked 15 demos last month using Zoho CRM."
+      },
+      "expect": {
+        "years_experience": 1.5,
+        "notice_days": 14,
+        "expected_salary": 45000,
+        "relocation_ok": true,
+        "verdict": "Maybe"
+      },
+      "note": "1.5 years against a 2-year minimum"
+    },
+    {
+      "id": "long-notice",
+      "job": "sales",
+      "form": {
+        "city": "Pune",
+        "years": 3,
+        "skills": "CRM, cold calling, English"
+      },
+      "said": {
+        "years_experience": "3 years",
+        "notice_period": "three months",
+        "expected_salary": "55k",
+        "relocation_ok": "yes",
+        "skill_example": "I booked 25 demos a month and grew pipeline by 40 percent using Salesforce CRM."
+      },
+      "expect": {
+        "years_experience": 3,
+        "notice_days": 90,
+        "expected_salary": 55000,
+        "relocation_ok": true,
+        "verdict": "Maybe",
+        "flag": "Long notice period: 90 days"
+      },
+      "note": "90-day notice is three times the limit"
+    },
+    {
+      "id": "negotiated-down",
+      "job": "sales",
+      "form": {
+        "city": "Pune",
+        "years": 3,
+        "skills": "CRM, cold calling, English"
+      },
+      "said": {
+        "years_experience": "3 years",
+        "notice_period": "30 days",
+        "expected_salary": "70k",
+        "relocation_ok": "yes",
+        "negotiation_outcome": "okay, 62k works for me",
+        "agreed_salary": "62k",
+        "skill_example": "I made 90 cold calls a day in HubSpot CRM and booked 20 demos a month."
+      },
+      "expect": {
+        "years_experience": 3,
+        "notice_days": 30,
+        "expected_salary": 70000,
+        "relocation_ok": true,
+        "negotiation_outcome": "accepted",
+        "agreed_salary": 62000,
+        "verdict": "Strong"
+      },
+      "note": "62k agreed is inside the approved 10% stretch (66k), so salary counts as on budget"
+    },
+    {
+      "id": "negotiation-declined",
+      "job": "sales",
+      "form": {
+        "city": "Pune",
+        "years": 3,
+        "skills": "CRM, cold calling, English"
+      },
+      "said": {
+        "years_experience": "3 years",
+        "notice_period": "30 days",
+        "expected_salary": "85k",
+        "relocation_ok": "yes",
+        "negotiation_outcome": "no, that is too low for me",
+        "skill_example": "I booked 20 demos a month from cold calling."
+      },
+      "expect": {
+        "years_experience": 3,
+        "notice_days": 30,
+        "expected_salary": 85000,
+        "relocation_ok": true,
+        "negotiation_outcome": "declined",
+        "verdict": "Reject"
+      }
+    },
+    {
+      "id": "support-strong",
+      "job": "support",
+      "form": {
+        "city": "Bangalore",
+        "years": 6,
+        "skills": "Team lead, Zendesk, SLA"
+      },
+      "said": {
+        "years_experience": "six years",
+        "notice_period": "30 days",
+        "expected_salary": "85,000",
+        "relocation_ok": "yes",
+        "skill_example": "As team lead of 10 agents in Zendesk I cut first response time from 6 hours to 40 minutes and kept SLA above 98 percent for a year."
+      },
+      "expect": {
+        "years_experience": 6,
+        "notice_days": 30,
+        "expected_salary": 85000,
+        "relocation_ok": true,
+        "verdict": "Strong"
+      }
+    },
+    {
+      "id": "form-call-mismatch",
+      "job": "sales",
+      "form": {
+        "city": "Pune",
+        "years": 6,
+        "skills": "CRM, cold calling, English"
+      },
+      "said": {
+        "years_experience": "two years",
+        "notice_period": "15 days",
+        "expected_salary": "50k",
+        "relocation_ok": "yes",
+        "skill_example": "I made 50 cold calls a day in CRM and booked 10 demos a month."
+      },
+      "expect": {
+        "years_experience": 2,
+        "notice_days": 15,
+        "expected_salary": 50000,
+        "relocation_ok": true,
+        "verdict": "Maybe",
+        "flag": "Form says 6 yrs, call says 2 yrs"
+      },
+      "note": "saying 6 years on the form and 2 on the call costs answer-quality points"
+    },
+    {
+      "id": "personal-details-ignored",
+      "job": "sales",
+      "form": {
+        "city": "Pune",
+        "years": 3,
+        "skills": "CRM, cold calling, English"
+      },
+      "said": {
+        "years_experience": "3 years",
+        "notice_period": "two weeks",
+        "expected_salary": "50k",
+        "relocation_ok": "yes",
+        "skill_example": "I am 34 and married with two kids. I made 80 cold calls a day in HubSpot CRM and booked 22 demos last quarter."
+      },
+      "expect": {
+        "years_experience": 3,
+        "notice_days": 14,
+        "expected_salary": 50000,
+        "relocation_ok": true,
+        "verdict": "Strong",
+        "same_score_as": "strong-specific-no-team"
+      }
+    },
+    {
+      "id": "strong-specific-no-team",
+      "job": "sales",
+      "form": {
+        "city": "Pune",
+        "years": 3,
+        "skills": "CRM, cold calling, English"
+      },
+      "said": {
+        "years_experience": "3 years",
+        "notice_period": "two weeks",
+        "expected_salary": "50k",
+        "relocation_ok": "yes",
+        "skill_example": "I made 80 cold calls a day in HubSpot CRM and booked 22 demos last quarter."
+      },
+      "expect": {
+        "years_experience": 3,
+        "notice_days": 14,
+        "expected_salary": 50000,
+        "relocation_ok": true,
+        "verdict": "Strong"
+      }
+    }
+  ]
+}
