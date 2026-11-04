@@ -3,7 +3,6 @@
 // Run: node --experimental-sqlite server.js   (no npm dependencies)
 import http from 'node:http';
 import https from 'node:https';
-import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -92,20 +91,19 @@ function metricsText() {
   });
 }
 
-// ---------------------------------------------------------------- static files
-const PUBLIC = path.join(ROOT, 'public');
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
-const CSP = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' ws: wss:; frame-ancestors 'self'; base-uri 'self'; form-action 'self'";
-async function serveStatic(res, p) {
-  const f = p === '/' ? '/apply.html' : p === '/dashboard' ? '/dashboard.html' : p;
-  const full = path.join(PUBLIC, path.normalize(f).replace(/^(\.\.[/\\])+/, ''));
-  if (!full.startsWith(PUBLIC + path.sep)) return false;
-  const st = await stat(full).catch(() => null);
-  if (!st?.isFile()) return false;
-  const ext = path.extname(full);
-  res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=300', ...SECURITY_HEADERS, ...(ext === '.html' ? { 'Content-Security-Policy': CSP } : {}) });
-  res.end(await readFile(full));
-  return true;
+// ---------------------------------------------------------------- web app (Next.js, in ./web)
+// The recruiter dashboard and the careers pages are a Next.js app hosted by this server, so the API, the
+// Dograh WebSocket proxy, webhooks and the background worker share one process with the pages.
+// RECRUIT_UI=off runs the API alone (tests, headless deployments).
+const UI = process.env.RECRUIT_UI !== 'off';
+let nextHandle = null, nextUpgrade = null;
+async function prepareWeb() {
+  if (!UI) return;
+  const { default: next } = await import('next');
+  const app = next({ dev: process.env.NODE_ENV !== 'production', dir: path.join(ROOT, 'web'), hostname: 'localhost', port: PORT });
+  await app.prepare();
+  nextHandle = app.getRequestHandler();
+  nextUpgrade = app.getUpgradeHandler();
 }
 
 // ---------------------------------------------------------------- request pipeline
@@ -136,7 +134,12 @@ async function dispatch(req, res, u, ctx) {
     if (res.headersSent) return;
     return isReply(out) ? send(res, out.status, out.body, out.headers) : send(res, 200, out);
   }
-  if (m === 'GET' && (await serveStatic(res, p))) { ctx.route = 'static'; return; }
+  if (p.startsWith('/api/')) throw new HttpError(404, 'not found');
+  if (nextHandle) {
+    ctx.route = 'web';
+    for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v); // must be set before Next starts the response
+    return nextHandle(req, res);
+  }
   throw new HttpError(404, 'not found');
 }
 
@@ -195,6 +198,7 @@ const sockets = new Set();
 server.on('upgrade', (req, socket, head) => {
   const u = new URL(req.url, 'http://x');
   const rest = u.pathname.startsWith('/dograh/') ? u.pathname.slice('/dograh'.length) : '';
+  if (!rest) return nextUpgrade ? nextUpgrade(req, socket, head) : socket.destroy(); // Next.js dev reload socket
   if (!DOGRAH.base || !DOGRAH_PUBLIC_WS.test(rest) || !tunnelAllowed(req)) return socket.destroy();
   const headers = {}; for (const k of ['connection', 'upgrade', 'sec-websocket-key', 'sec-websocket-version', 'sec-websocket-extensions', 'sec-websocket-protocol']) if (req.headers[k]) headers[k] = req.headers[k];
   const { lib, opts } = dograhTarget(rest, u.search, headers);
@@ -217,10 +221,11 @@ server.on('upgrade', (req, socket, head) => {
 
 // ---------------------------------------------------------------- lifecycle
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  try { await prepareWeb(); } catch (e) { log.error('web app failed to start', { error: e }); process.exit(1); }
   const worker = suite.startWorker();
   server.listen(PORT, () => {
     // The test harness and start.mjs wait for this exact line.
-    console.log(`Recruiting System on http://localhost:${PORT}  (dashboard: /dashboard)  Dograh phone:${DOGRAH.phoneReady} web:${DOGRAH.webReady}`);
+    console.log(`Recruiting System on http://localhost:${PORT}  (dashboard: /dashboard)  Dograh phone:${DOGRAH.phoneReady} web:${DOGRAH.webReady}  ui:${UI ? (process.env.NODE_ENV === 'production' ? 'production' : 'dev') : 'off'}`);
   });
   // Graceful shutdown: stop taking work, let in-flight requests finish (max 10 s), close live interviews and the database.
   let stopping = false;
