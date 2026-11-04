@@ -1,6 +1,6 @@
 # Architecture
 
-AI Recruiter OS runs AI voice interviews for job applicants, scores them against a 100-point rubric and gives recruiters a ranked pipeline. It is a single Node.js process with an embedded SQLite database and no npm dependencies. The voice engine ([Dograh](https://github.com/dograh-hq/dograh)) runs separately.
+AI Recruiter OS runs AI voice interviews for job applicants, scores them against a 100-point rubric and gives recruiters a ranked pipeline. It is a Next.js web app and a layered Node.js API. Both are served by one process, with an embedded SQLite database. The voice engine ([Dograh](https://github.com/dograh-hq/dograh)) runs separately.
 
 ## System view
 
@@ -42,6 +42,7 @@ A screening is `in_progress`, then `completed` or `incomplete`. A call counts as
 
 | Layer | Path | Responsibility |
 |---|---|---|
+| Web app | `web/` | Next.js App Router pages: the public careers site, the interview room, booking and the recruiter dashboard. Client components fetch the API with SWR. |
 | Composition root | `server.js` | Loads config, opens the database, wires services and routes, runs the request pipeline, handles shutdown |
 | Infrastructure | `lib/` | `config` (typed env and validation), `logger` (structured logs with redaction), `http` (router, errors, bounded body reader), `validate` (schemas), `resilience` (retry, circuit breaker), `metrics` (Prometheus), `rate-limit` (token bucket), `session` (signed expiring cookies), `db` (migrations, transactions) |
 | Schema | `db/migrations.js` | Versioned migrations, each applied once inside a transaction |
@@ -53,6 +54,16 @@ A screening is `in_progress`, then `completed` or `incomplete`. A call counts as
 
 Dependencies point one way: routes, then services, then lib. Services take their collaborators as arguments (`createInterviewService({ db, candidates, dograh, ... })`), so tests can replace any of them.
 
+## Why one process hosts both the pages and the API
+
+The Next.js app runs inside `server.js` as a custom server instead of as Route Handlers. Three things need a long-lived process that serverless handlers can't give:
+
+1. **WebSocket proxy.** Browser interviews reach Dograh's signaling WebSocket through this server (`/dograh/...`), so a candidate only ever talks to one origin.
+2. **Background worker.** The task queue runs analyses, call queues and reminders.
+3. **Single-writer SQLite.**
+
+Next.js handles every non-API path; the API keeps its own router, validation and error model. `RECRUIT_UI=off` runs the API alone, which the end-to-end tests use.
+
 ## Request pipeline
 
 Every request gets an `X-Request-Id`, which is also on every log line. The pipeline runs these steps in order:
@@ -62,7 +73,7 @@ Every request gets an `X-Request-Id`, which is also on every log line. The pipel
 3. Health, readiness and metrics.
 4. Suite routes (these include the authentication gate).
 5. Core router.
-6. Static files (served with a CSP).
+6. The Next.js app (security headers are set before Next.js starts the response).
 
 Errors are typed (`HttpError`). In production, an unexpected error returns a generic message, and the detail goes to the log.
 

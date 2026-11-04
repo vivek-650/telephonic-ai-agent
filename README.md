@@ -1,8 +1,10 @@
 # AI Recruiter OS
 
-An AI voice recruiter you run yourself. Applicants come in from a careers page or a CSV export (Naukri, Indeed, anything). The AI phones each one, confirms they applied, reads their resume, asks 3 to 4 questions, can negotiate salary inside your budget, and scores them out of 100. You review a ranked Kanban board and decide.
+An AI interview platform you run yourself. Candidates apply on a careers page, or come in from a CSV export (Naukri, Indeed, anything). An AI recruiter then interviews each one by voice, in the browser or by phone. It reads their resume, asks resume-specific questions, can negotiate salary inside your budget, and scores them on an explainable 100-point rubric. Recruiters review a ranked pipeline and make every decision.
 
-Bring your own keys. No monthly fee to us, no lock-in. Node.js only, zero npm dependencies.
+**Stack:** Next.js 16 (App Router), React 19, TypeScript and Tailwind CSS 4 for the web app. A layered Node.js 22 API with built-in SQLite (`node:sqlite`). [Dograh](https://github.com/dograh-hq/dograh) (open source, Pipecat) is the voice engine, connected over WebRTC.
+
+Bring your own keys. No monthly fee, no lock-in. The API has no runtime dependencies; the web app uses a small, pinned set (Next.js, React, Recharts, lucide, SWR).
 
 ## What you get
 
@@ -20,7 +22,8 @@ Bring your own keys. No monthly fee to us, no lock-in. Node.js only, zero npm de
 
 ## Engineering
 
-- **Layered backend** with no framework and no dependencies: `lib/` (infrastructure), `services/` (domain), `routes/` (HTTP), `db/` (versioned migrations). See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+- **Next.js web app** in `web/`: a careers site, a full-screen voice interview room with a live transcript, candidate self-booking, and a recruiter dashboard with 13 pages. It has a design-token system with light and dark themes, and it works on mobile.
+- **Layered backend** with no framework: `lib/` (infrastructure), `services/` (domain), `routes/` (HTTP), `db/` (versioned migrations). See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - **Reliability**:
   - a circuit breaker, retries with backoff and timeouts on every voice-engine call;
   - idempotent, transactional webhook processing;
@@ -49,21 +52,23 @@ Two programs: this app (dashboard, careers page, scoring, CSV import) and Dograh
 
 ## Quick start: one command
 
-You need **Node.js 22.13 or newer** (free: <https://nodejs.org>). There is nothing to `npm install` because the app has no dependencies.
+You need **Node.js 22.13 or newer** (free: <https://nodejs.org>).
 
 ```bash
-git clone https://github.com/YOUR-USER/ai-recruiter-os.git
-cd ai-recruiter-os
-npm start          # or: npm run demo   (starts with two demo roles and sample leads)
+git clone https://github.com/vivek-650/telephonic-ai-agent.git
+cd telephonic-ai-agent
+npm install
+npm run dev        # hot reload; or: npm start (production build, built on first run)
 ```
 
-Open <http://localhost:4870/dashboard>. In VS Code: open the folder, open the terminal (Ctrl+`), run `npm start`. That is the whole setup.
+Open <http://localhost:4870> for the careers site and <http://localhost:4870/dashboard> for the recruiter dashboard.
 
 | Command | What it does |
 |---|---|
-| `npm start` | Checks your setup, then starts the app |
-| `npm run demo` | Same, plus two demo roles with sample leads, and opens your browser |
-| `npm run dev` | Starts the app and opens your browser |
+| `npm run dev` | Starts the API and the web app with hot reload, and opens your browser |
+| `npm start` | Checks your setup, builds the web app if needed, and starts in production mode |
+| `npm run build` | Builds the web app (also type-checks every page) |
+| `npm run demo` | Same as start, plus two demo roles with sample leads |
 | `npm run doctor` | Tells you in plain words what is missing or broken |
 | `npm test` | Runs the unit tests and the end-to-end tests against a mock voice engine |
 | `npm run eval` | Runs the interview-pipeline evals: extraction, verdicts, fairness |
@@ -155,12 +160,21 @@ npm test
 ## Project layout
 
 ```
-server.js      HTTP server, applications, scoring webhook, Dograh calls
-suite.js       jobs, CSV import and call queue, interviews, offers, automation
-scoring.js     100 point scoring, answer parsing
+web/           Next.js app: careers site, interview room, booking, recruiter dashboard
+  app/         routes: (public)/, apply/[jobId], book, login, dashboard/*
+  components/  ui/ design system, charts/, interview/ (call room, simulator), candidate/, dashboard/
+  lib/         typed API client, shared types, Dograh WebRTC session
+server.js      composition root: hosts the web app, API, Dograh proxy and worker in one process
+lib/           config, logging, router, validation, retries and circuit breaker, metrics, sessions, migrations
+services/      interview lifecycle, scoring and audit, Dograh client, TURN relay
+routes/        core API routes
+db/            versioned schema migrations
+suite.js       roles, CSV import and call queue, interviews, offers, automation, auth
+scoring.js     100 point rubric, answer parsing, resume probes
 llm.js         optional AI router with cache, daily cap and PII stripping
 engine.js      engine room and traces
-public/        careers page, dashboard, booking page
+evals/         labelled interview cases and the eval runner
+tests/unit/    unit tests (node:test); test.mjs is the end-to-end suite
 dograh/        the screening agent (workflow.json, prompt) and optional agents
 scripts/       setup-dograh.mjs, seed-demo.mjs
 demo/          sample CSVs (placeholder numbers) and a sample resume
