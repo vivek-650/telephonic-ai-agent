@@ -2,11 +2,13 @@
 
 // Bump when the rubric changes in a way that changes scores. Stored with every score (score_audit)
 // so any automated decision can be traced to the exact rules that made it.
-export const RUBRIC_VERSION = '2026.11-2';
+export const RUBRIC_VERSION = '2026.11-3';
 
-// Whole-word skill match: "java" must not match "javascript", "sla" may match "SLAs".
+// Whole-word skill match with light stemming on both sides: "java" never matches "javascript",
+// while "cold calls" matches "cold calling" and "SLAs" matches "sla".
 const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-export const mentionsSkill = (text, skill) => new RegExp(`(?:^|[^a-z0-9+#])${esc(String(skill).toLowerCase().trim())}(?:s|es)?(?![a-z0-9+#])`).test(String(text).toLowerCase());
+const stem = s => String(s).toLowerCase().replace(/\b([a-z]{3,}?)(?:ing|ed|es|s)\b/g, '$1');
+export const mentionsSkill = (text, skill) => new RegExp(`(?:^|[^a-z0-9+#])${esc(stem(skill).trim())}(?![a-z0-9+#])`).test(stem(text));
 
 export const QUESTIONS = [
   { key: 'years_experience', type: 'number', ask: 'How many years of relevant experience do you have for this role?' },
@@ -115,7 +117,9 @@ export function scoreCandidate(c, job, answers) {
   const sal = negotiated ? a.agreed_salary : asked;
   if (has(sal) && !job.max_salary) add('Salary fit', 20, 20, `Rs ${Number(sal).toLocaleString('en-IN')}/mo, no budget set for this role`);
   else if (has(sal)) {
-    const ratio = sal / job.max_salary;
+    // A deal the agent negotiated inside the role's approved stretch counts as on budget.
+    const ceiling = negotiated && job.negotiable ? job.max_salary * (1 + (Number.isFinite(Number(job.stretch_pct)) ? Number(job.stretch_pct) : 10) / 100) : job.max_salary;
+    const ratio = sal / ceiling;
     const pts = ratio <= 1 ? 20 : ratio <= 1.15 ? 12 : ratio <= 1.3 ? 5 : 0;
     add('Salary fit', pts, 20, `Rs ${Number(sal).toLocaleString('en-IN')}/mo vs budget Rs ${job.max_salary.toLocaleString('en-IN')}${negotiated ? ` (negotiated down from Rs ${Number(asked).toLocaleString('en-IN')})` : ''}`);
     if (negotiated && has(asked) && asked > sal) flags.push({ level: 'amber', text: `Negotiated: asked Rs ${Number(asked).toLocaleString('en-IN')}/mo, agreed Rs ${Number(sal).toLocaleString('en-IN')}/mo (subject to hiring team approval)` });
