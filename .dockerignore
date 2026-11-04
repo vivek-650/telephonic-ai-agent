@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+*.db
+*.db-*
+data/
+node_modules/
+call-allowlist.txt
+mail-allowlist.txt
+.git
+.github
+tests
+evals
+coverage
+*.log
+CLAUDE.md
+.claude
