@@ -117,6 +117,7 @@ async function dispatch(req, res, u, ctx) {
   const p = u.pathname, m = req.method;
   if (!tunnelAllowed(req) && !['/api/webhooks/dograh', '/api/health'].includes(p)) throw new HttpError(403, 'not available over the public tunnel');
   if (p.startsWith('/dograh/')) { ctx.route = '/dograh/*'; return proxyDograh(req, res, p.slice('/dograh'.length), u.search); }
+  if (['/api/health', '/api/ready', '/metrics'].includes(p)) ctx.route = p;
   if (p === '/api/health') return send(res, 200, health());
   if (p === '/api/ready') { const r = await readiness(); return send(res, r.status, r.body); }
   if (p === '/metrics' && m === 'GET') {
