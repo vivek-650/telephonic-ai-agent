@@ -18,6 +18,24 @@ Bring your own keys. No monthly fee to us, no lock-in. Node.js only, zero npm de
 - **Extras**: AI job drafting, resume analysis, interview scheduling and scorecards, reference checks, offer drafts, onboarding, talent pool. Every AI feature has a rules-based fallback, so it works with no keys at all.
 - **Built-in walkthrough**: the dashboard has a "How to use" tab that explains every page.
 
+## Engineering
+
+- **Layered backend** with no framework and no dependencies: `lib/` (infrastructure), `services/` (domain), `routes/` (HTTP), `db/` (versioned migrations). See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+- **Reliability**:
+  - a circuit breaker, retries with backoff and timeouts on every voice-engine call;
+  - idempotent, transactional webhook processing;
+  - graceful shutdown;
+  - health and readiness probes;
+  - Prometheus metrics at `/metrics`.
+- **AI quality**:
+  - a tested contract between the agent prompt and the server;
+  - a deterministic, explainable 100-point rubric;
+  - an audit row for every automated score (rubric version and input hash);
+  - offline evals gated in CI;
+  - fairness tests that check personal attributes and names never move a score.
+- **Security**: signed expiring sessions, rate limits, encrypted secrets, log redaction, CSP and a locked call allowlist. See [SECURITY.md](SECURITY.md).
+- **CI**: syntax check, unit tests, end-to-end tests, evals and a Docker health probe on Node 22.13, 22.x and 24.x.
+
 ## How it fits together
 
 ```
@@ -47,7 +65,10 @@ Open <http://localhost:4870/dashboard>. In VS Code: open the folder, open the te
 | `npm run demo` | Same, plus two demo roles with sample leads, and opens your browser |
 | `npm run dev` | Starts the app and opens your browser |
 | `npm run doctor` | Tells you in plain words what is missing or broken |
-| `npm test` | Runs the 39 automated tests |
+| `npm test` | Runs the unit tests and the end-to-end tests against a mock voice engine |
+| `npm run eval` | Runs the interview-pipeline evals: extraction, verdicts, fairness |
+| `npm run coverage` | Unit tests with a coverage report |
+| `npm run check` | Checks that every source file parses |
 
 Everything works without any keys except real phone calls. **You never edit a `.env` file**: open the dashboard, click **Settings**, and follow the checklist.
 
