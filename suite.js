@@ -273,7 +273,7 @@ export function createSuite(ctx) {
     const c = cand(cid); if (!c) throw new Error('candidate not found');
     if (!TEMPLATES[kind]) throw new Error(`unknown message kind ${kind}`);
     const job = jobRow(c.job_id);
-    const vars = { NAME: first(c.name), ROLE: job.title, COMPANY: job.company, LINK: `${publicBase()}/book.html?c=${c.id}`, TIME: extra.time ? fmtIST(extra.time) : '', MEET: extra.meet || '', DOCS: extra.docs || '', DATE: extra.date || '' };
+    const vars = { NAME: first(c.name), ROLE: job.title, COMPANY: job.company, LINK: `${publicBase()}/book?c=${c.id}`, TIME: extra.time ? fmtIST(extra.time) : '', MEET: extra.meet || '', DOCS: extra.docs || '', DATE: extra.date || '' };
     const base = TEMPLATES[kind];
     let text = base, provider = 'template';
     const r = await llm.ask({ task: 'message', system: MSG_SYSTEM, maxTokens: 220, prompt: `Message type: ${kind.replace('_', ' ')}. Improve this draft for tone and clarity. Keep every token and every fact.\n\nDRAFT:\n${base}` });
@@ -580,7 +580,7 @@ export function createSuite(ctx) {
       }
       case 'no_show_rescue': {
         await draftMessage(t.candidate_id, 'no_show');
-        return reminderCall(c, { kind: 'no_show', candidate_name: c.name, job_title: jobRow(c.job_id).title, booking_link: `${publicBase()}/book.html?c=${c.id}` });
+        return reminderCall(c, { kind: 'no_show', candidate_name: c.name, job_title: jobRow(c.job_id).title, booking_link: `${publicBase()}/book?c=${c.id}` });
       }
       case 'doc_chase': {
         const pending = db.prepare("SELECT title FROM onboarding WHERE candidate_id=? AND kind='doc' AND status='pending'").all(t.candidate_id).map(r => r.title);

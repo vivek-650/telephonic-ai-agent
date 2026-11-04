@@ -41,7 +41,16 @@ say(`  Careers:    http://localhost:${PORT}/`);
 say('  Stop with Ctrl+C.');
 say('');
 
-const env = { ...process.env, PORT: String(PORT) };
+// 6. The web app: production serves the built Next.js app (built here on first run); --dev hot-reloads it.
+const dev = args.has('--dev');
+const env = { ...process.env, PORT: String(PORT), NODE_ENV: dev ? 'development' : 'production' };
+if (!dev && !existsSync(path.join(ROOT, 'web', '.next', 'BUILD_ID'))) {
+  say('  Building the web app (first run only, about a minute)...');
+  const nextBin = path.join(ROOT, 'node_modules', 'next', 'dist', 'bin', 'next');
+  if (!existsSync(nextBin)) fail('Dependencies are missing. Run: npm install');
+  const b = spawnSync(process.execPath, [nextBin, 'build', 'web'], { stdio: 'inherit', cwd: ROOT, env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1' } });
+  if (b.status !== 0) fail('The web app did not build. Fix the error above and run npm start again.');
+}
 if (args.has('--demo')) env.SEED_DEMO_ROLES = '1';
 const child = spawn(process.execPath, ['--experimental-sqlite', '--no-warnings', path.join(ROOT, 'server.js')], { stdio: 'inherit', env, cwd: ROOT });
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => child.kill(sig));

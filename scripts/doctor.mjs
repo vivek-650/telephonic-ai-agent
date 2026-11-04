@@ -12,7 +12,7 @@ add(maj > 22 || (maj === 22 && min >= 13), `Node.js ${process.versions.node}`, '
 let sqlite = true; try { await import('node:sqlite'); } catch { sqlite = false; }
 add(sqlite, 'Built-in SQLite (node:sqlite)', 'Needs Node.js 22.13 or newer');
 add(spawnSync(process.platform === 'win32' ? 'where' : 'which', ['pdftotext'], { stdio: 'ignore' }).status === 0, 'pdftotext (PDF resume upload)', 'Optional. macOS: brew install poppler. Ubuntu: sudo apt install poppler-utils');
-for (const f of ['server.js', 'suite.js', 'scoring.js', 'settings.js', 'mailer.js', 'dograh/workflow.json', 'dograh/rejection-workflow.json', 'public/dashboard.html', 'public/apply.html']) add(existsSync(path.join(ROOT, f)), `File ${f}`, 'Re-download the project, a file is missing');
+for (const f of ['server.js', 'suite.js', 'scoring.js', 'settings.js', 'mailer.js', 'dograh/workflow.json', 'dograh/rejection-workflow.json', 'web/app/layout.tsx', 'web/app/dashboard/page.tsx']) add(existsSync(path.join(ROOT, f)), `File ${f}`, 'Re-download the project, a file is missing');
 if (env.DOGRAH_BASE_URL) { try { const r = await fetch(`${env.DOGRAH_BASE_URL.replace(/\/+$/, '')}/api/v1/health`, { signal: AbortSignal.timeout(5000) }); add(r.ok, `Dograh reachable at ${env.DOGRAH_BASE_URL}`, 'Is Dograh running? Check the address in Settings'); } catch { add(false, `Dograh reachable at ${env.DOGRAH_BASE_URL}`, 'Is Dograh running? Check the address in Settings'); } }
 else add(true, 'Dograh address (not set yet: do it in the dashboard under Settings)');
 for (const [ok, what, fix] of rows) console.log(`${ok ? '  OK  ' : ' FIX  '} ${what}${ok || !fix ? '' : `\n        -> ${fix}`}`);

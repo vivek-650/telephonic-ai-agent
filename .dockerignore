@@ -15,3 +15,6 @@ coverage
 *.log
 CLAUDE.md
 .claude
+web/.next
+web/node_modules
+node_modules

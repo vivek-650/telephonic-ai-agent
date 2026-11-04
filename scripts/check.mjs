@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SKIP = new Set(['node_modules', '.git', 'data', 'coverage']);
+const SKIP = new Set(['node_modules', '.git', 'data', 'coverage', '.next', 'web']); // web/ is TypeScript, checked by next build
 const files = [];
 (function walk(dir) {
   for (const f of readdirSync(dir)) {

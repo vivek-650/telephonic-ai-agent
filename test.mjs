@@ -130,7 +130,7 @@ const dir = mkdtempSync(path.join(tmpdir(), 'rs-'));
 const PORT = 4990 + Math.floor(Math.random() * 9);
 const app = spawn(process.execPath, ['--experimental-sqlite', '--no-warnings', 'server.js'], {
   cwd: path.dirname(fileURLToPath(import.meta.url)),
-  env: { ...process.env, PORT: String(PORT), DB_PATH: path.join(dir, 't.db'), DOGRAH_BASE_URL: MOCK, DOGRAH_API_KEY: 'dgr_test', DOGRAH_AGENT_UUID: 'agent-uuid-1', DOGRAH_WORKFLOW_ID: '1', DOGRAH_CAPS_TTL_MS: '0', DOGRAH_EMBED_TOKEN: 'emb_test', PUBLIC_BASE_URL: '', ADMIN_PASSWORD: '', TWILIO_ACCOUNT_SID: '', TWILIO_AUTH_TOKEN: '', CLOUDFLARE_TURN_KEY_ID: '', CLOUDFLARE_TURN_API_TOKEN: '', DOGRAH_REJECTION_WORKFLOW_ID: '', DOGRAH_REJECTION_AGENT_UUID: '', DOGRAH_REFERENCE_AGENT_UUID: '', DOGRAH_REMINDER_AGENT_UUID: '', LLM_DISABLE: '1', SPOT_CHECK_RATE: '0', SEED_DEMO_DATA: '1', SMTP_HOST: '127.0.0.1', SMTP_PORT: String(SMTP_PORT), SMTP_SECURE: '0', SMTP_USER: 'u', SMTP_PASS: 'p', MAIL_FROM: 'hr@example.com', MAIL_FROM_NAME: 'Test HR', MAIL_ALLOWLIST: 'allowed@example.com', IMPORT_CALL_ALLOWLIST: '+910000000001,+910000000055,+910000000099' },
+  env: { ...process.env, RECRUIT_UI: 'off', PORT: String(PORT), DB_PATH: path.join(dir, 't.db'), DOGRAH_BASE_URL: MOCK, DOGRAH_API_KEY: 'dgr_test', DOGRAH_AGENT_UUID: 'agent-uuid-1', DOGRAH_WORKFLOW_ID: '1', DOGRAH_CAPS_TTL_MS: '0', DOGRAH_EMBED_TOKEN: 'emb_test', PUBLIC_BASE_URL: '', ADMIN_PASSWORD: '', TWILIO_ACCOUNT_SID: '', TWILIO_AUTH_TOKEN: '', CLOUDFLARE_TURN_KEY_ID: '', CLOUDFLARE_TURN_API_TOKEN: '', DOGRAH_REJECTION_WORKFLOW_ID: '', DOGRAH_REJECTION_AGENT_UUID: '', DOGRAH_REFERENCE_AGENT_UUID: '', DOGRAH_REMINDER_AGENT_UUID: '', LLM_DISABLE: '1', SPOT_CHECK_RATE: '0', SEED_DEMO_DATA: '1', SMTP_HOST: '127.0.0.1', SMTP_PORT: String(SMTP_PORT), SMTP_SECURE: '0', SMTP_USER: 'u', SMTP_PASS: 'p', MAIL_FROM: 'hr@example.com', MAIL_FROM_NAME: 'Test HR', MAIL_ALLOWLIST: 'allowed@example.com', IMPORT_CALL_ALLOWLIST: '+910000000001,+910000000055,+910000000099' },
   stdio: ['ignore', 'pipe', 'inherit'],
 });
 await new Promise((res, rej) => { app.stdout.on('data', d => /Recruiting System on/.test(d) && res()); setTimeout(() => rej(new Error('server did not start')), 8000); });
@@ -142,15 +142,11 @@ const req = async (p, method = 'GET', body) => {
 const applicant = { consent: true, job_id: 'inside-sales', name: 'Riya Sharma', email: 'riya@example.com', phone: '00000 00001', city: 'Pune', years: 3, notice_days: 15, expected_salary: 52000, skills: 'CRM, cold calling, English', why: 'I love outbound.' };
 
 try {
-  await t('pages serve', async () => {
-    assert.match((await req('/')).text, /html/); assert.match((await req('/dashboard')).text, /html/);
-  });
-  await t('careers page interviews applicants in the browser first, phone only as a fallback', async () => {
-    const html = await (await fetch(B + '/')).text();
-    assert.match(html, /begin\(cfg\.dograh_web \? 'web' : cfg\.dograh_phone \? 'phone' : 'simulator'\)/);
-    assert.doesNotMatch(html, /Your phone is about to ring/);
-    // the full screen call view must stay hidden until an interview starts, or it covers the form
-    assert.match(html, /class="call hidden" id="callView"/); assert.match(html, /\.call\.hidden\{display:none\}/);
+  // Pages are the Next.js app in web/ (covered by the build smoke test); here the API runs alone.
+  await t('API-only mode answers JSON 404 for unknown API paths and serves no pages', async () => {
+    const r = await req('/api/nope'); assert.equal(r.status, 404); assert.match(r.text, /json/);
+    assert.equal((await fetch(B + '/dashboard')).status, 404);
+    assert.ok((await fetch(B + '/api/health')).headers.get('x-request-id'), 'every response carries a request id');
   });
   await t('config reports Dograh ready', async () => {
     const r = await req('/api/config'); assert.equal(r.data.dograh_phone, true); assert.equal(r.data.dograh_web, true); assert.equal(r.data.questions.length, 6);

@@ -1,25 +1,46 @@
 {
   "name": "ai-recruiter-os",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
+    "dev": "node start.mjs --dev --open",
+    "build": "next build web",
     "start": "node start.mjs",
-    "dev": "node start.mjs --open",
     "demo": "node start.mjs --demo --open",
-    "doctor": "node scripts/doctor.mjs",
     "test": "npm run test:unit && npm run test:e2e",
-    "seed": "node --experimental-sqlite --no-warnings scripts/seed-demo.mjs",
-    "setup:dograh": "node scripts/setup-dograh.mjs",
     "test:unit": "node --experimental-sqlite --no-warnings --test \"tests/unit/*.test.mjs\"",
     "test:e2e": "node --experimental-sqlite --no-warnings test.mjs",
+    "eval": "node evals/run.mjs",
     "coverage": "node --experimental-sqlite --no-warnings --test --experimental-test-coverage \"tests/unit/*.test.mjs\"",
     "check": "node scripts/check.mjs",
-    "eval": "node evals/run.mjs",
-    "typecheck": "npx -y -p typescript@5.6.3 -p @types/node@22.10.2 tsc -p tsconfig.json"
+    "typecheck": "npx -y -p typescript@5.6.3 -p @types/node@22.10.2 tsc -p tsconfig.json",
+    "doctor": "node scripts/doctor.mjs",
+    "seed": "node --experimental-sqlite --no-warnings scripts/seed-demo.mjs",
+    "setup:dograh": "node scripts/setup-dograh.mjs"
   },
-  "description": "AI voice recruiter: calls applicants, reads resumes, negotiates within budget and scores them. Self-hosted, bring your own keys.",
+  "description": "AI interview platform: candidates apply, an AI recruiter interviews them by voice, an explainable rubric scores them, recruiters decide. Next.js + Node.",
   "license": "MIT",
   "engines": {
     "node": ">=22.13"
+  },
+  "dependencies": {
+    "clsx": "2.1.1",
+    "geist": "1.9.0",
+    "lucide-react": "1.68.0",
+    "next": "16.4.5",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "recharts": "3.10.1",
+    "sonner": "2.0.8",
+    "swr": "2.5.1",
+    "tailwind-merge": "3.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.4",
+    "@types/node": "22.10.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "tailwindcss": "4.3.4",
+    "typescript": "5.6.3"
   }
 }
