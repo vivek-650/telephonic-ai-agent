@@ -14,7 +14,8 @@
     "test:e2e": "node --experimental-sqlite --no-warnings test.mjs",
     "coverage": "node --experimental-sqlite --no-warnings --test --experimental-test-coverage \"tests/unit/*.test.mjs\"",
     "check": "node scripts/check.mjs",
-    "eval": "node evals/run.mjs"
+    "eval": "node evals/run.mjs",
+    "typecheck": "npx -y -p typescript@5.6.3 -p @types/node@22.10.2 tsc -p tsconfig.json"
   },
   "description": "AI voice recruiter: calls applicants, reads resumes, negotiates within budget and scores them. Self-hosted, bring your own keys.",
   "license": "MIT",
