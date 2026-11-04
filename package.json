@@ -13,7 +13,8 @@
     "test:unit": "node --experimental-sqlite --no-warnings --test \"tests/unit/*.test.mjs\"",
     "test:e2e": "node --experimental-sqlite --no-warnings test.mjs",
     "coverage": "node --experimental-sqlite --no-warnings --test --experimental-test-coverage \"tests/unit/*.test.mjs\"",
-    "check": "node scripts/check.mjs"
+    "check": "node scripts/check.mjs",
+    "eval": "node evals/run.mjs"
   },
   "description": "AI voice recruiter: calls applicants, reads resumes, negotiates within budget and scores them. Self-hosted, bring your own keys.",
   "license": "MIT",
