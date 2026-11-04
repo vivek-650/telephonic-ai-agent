@@ -37,11 +37,11 @@ for (const c of cases) {
     if (answers[f] === c.expect[f]) field.hit++; else field.misses.push(`${c.id}.${f}: expected ${c.expect[f]}, got ${answers[f]}`);
   }
   const ok = result.verdict === c.expect.verdict;
-  verdictHits += ok; confusion[c.expect.verdict][result.verdict] = (confusion[c.expect.verdict][result.verdict] || 0) + 1;
+  verdictHits += Number(ok); confusion[c.expect.verdict][result.verdict] = (confusion[c.expect.verdict][result.verdict] || 0) + 1;
   let flagOk = null;
-  if (c.expect.flag) { flagTotal++; flagOk = result.flags.some(x => x.text === c.expect.flag); flagHits += flagOk; }
+  if (c.expect.flag) { flagTotal++; flagOk = result.flags.some(x => x.text === c.expect.flag); flagHits += Number(flagOk); }
   const fair = new Set(NAMES.map(n => runCase(c, n).result.total)).size === 1;
-  fairHits += fair;
+  fairHits += Number(fair);
   rows.push({ id: c.id, expected: c.expect.verdict, got: result.verdict, score: result.total, ok, flag: flagOk, fair });
 }
 // Pairs that must score identically (for example: the same answer with and without personal details).
