@@ -1,0 +1,23 @@
+{
+  "name": "ai-recruiter-os",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node start.mjs",
+    "dev": "node start.mjs --open",
+    "demo": "node start.mjs --demo --open",
+    "doctor": "node scripts/doctor.mjs",
+    "test": "npm run test:unit && npm run test:e2e",
+    "seed": "node --experimental-sqlite --no-warnings scripts/seed-demo.mjs",
+    "setup:dograh": "node scripts/setup-dograh.mjs",
+    "test:unit": "node --experimental-sqlite --no-warnings --test \"tests/unit/*.test.mjs\"",
+    "test:e2e": "node --experimental-sqlite --no-warnings test.mjs",
+    "coverage": "node --experimental-sqlite --no-warnings --test --experimental-test-coverage \"tests/unit/*.test.mjs\"",
+    "check": "node scripts/check.mjs"
+  },
+  "description": "AI voice recruiter: calls applicants, reads resumes, negotiates within budget and scores them. Self-hosted, bring your own keys.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13"
+  }
+}
