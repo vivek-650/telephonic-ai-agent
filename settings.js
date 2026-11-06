@@ -28,6 +28,7 @@ export const FIELDS = [
   { key: 'DOGRAH_WORKFLOW_ID', group: 'voice', label: 'Screening agent number', type: 'number', help: 'Filled in automatically. Needed for per-role voices.' },
   { key: 'DOGRAH_REJECTION_AGENT_UUID', group: 'voice', label: 'Rejection call agent ID (optional)', type: 'text', help: 'Filled in by the Create the AI agents button.' },
   { key: 'DOGRAH_REJECTION_WORKFLOW_ID', group: 'voice', label: 'Rejection call agent number (optional)', type: 'number', help: 'Filled in automatically.' },
+  { key: 'DOGRAH_DIAL_PREFIX', group: 'voice', label: 'SIP dial prefix (optional)', type: 'text', placeholder: '45454', help: 'Only for SIP carriers that route by a tech prefix, such as VoiceLink. Leave empty for Twilio or Vobiz.' },
   { key: 'DOGRAH_EMBED_TOKEN', group: 'voice', label: 'Browser voice token (optional)', type: 'secret', help: 'Only for browser voice screens.' },
   { key: 'CLOUDFLARE_TURN_KEY_ID', group: 'voice', label: 'Internet relay: Cloudflare TURN Key ID (optional, free tier)', type: 'text', help: 'Lets candidates outside your own network do browser interviews. Cloudflare dashboard > Realtime > TURN Server > Create. Used instead of Twilio when set.' },
   { key: 'CLOUDFLARE_TURN_API_TOKEN', group: 'voice', label: 'Internet relay: Cloudflare TURN API token (optional)', type: 'secret', help: 'Shown once, next to the Key ID, when you create the TURN key.' },
