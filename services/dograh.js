@@ -21,13 +21,6 @@ const AGENT_KINDS = {
 /**
  * @param {{ root: string, db: import('node:sqlite').DatabaseSync, settings: { put(k: string, v: any): void }, trace: (kind: string, detail: object) => void, log: any }} deps
  */
-/**
- * The number Dograh dials. SIP carriers that share Dograh's origin IP across customers (VoiceLink, for one) tell
- * customers apart by a tech prefix in front of the digits: "+919876543210" with prefix "45454" -> "45454919876543210".
- * The allowlist is always checked on the plain E.164 number before this runs.
- */
-export const dialString = (phone, prefix = '') => (prefix ? `${prefix}${String(phone).replace(/^\+/, '')}` : phone);
-
 export function createDograhClient({ root, db, settings, trace, log }) {
   const breaker = new CircuitBreaker('dograh', { threshold: envNum('DOGRAH_BREAKER_THRESHOLD', 5), cooldownMs: envNum('DOGRAH_BREAKER_COOLDOWN_MS', 30000) });
 
@@ -155,7 +148,7 @@ export function createDograhClient({ root, db, settings, trace, log }) {
   /** Place an outbound call. Not retried: a retry after a timeout could ring the candidate twice. */
   async function call(agentUuid, phone, initialContext) {
     try {
-      return await api('POST', `/api/v1/public/agent/workflow/${encodeURIComponent(agentUuid)}`, { phone_number: dialString(phone, DOGRAH.dialPrefix), initial_context: initialContext }, { idempotent: false });
+      return await api('POST', `/api/v1/public/agent/workflow/${encodeURIComponent(agentUuid)}`, { phone_number: phone, initial_context: initialContext }, { idempotent: false });
     } catch (e) {
       throw new DograhError(e.status || 502, String(e.message).replace(/^Dograh POST \S+ failed/, 'Dograh call failed'));
     }
