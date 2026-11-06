@@ -461,7 +461,7 @@ try {
     assert.equal((await req('/api/app-settings', 'PUT', { values: { GROQ_API_KEY: '' } })).data.changed.length, 0);
     assert.equal((await req('/api/app-settings')).data.fields.find(f => f.key === 'GROQ_API_KEY').hint, '••••1234');
     await req('/api/app-settings', 'PUT', { values: { BRAND_NAME: null } });
-    assert.equal((await req('/api/config')).data.brand, 'Recruit OS');
+    assert.equal((await req('/api/config')).data.brand, 'Hirevox');
     assert.equal((await req('/api/app-settings', 'PUT', { values: { NOT_A_SETTING: 'x' } })).status, 400);
     assert.equal((await req('/api/app-settings', 'PUT', { values: { LLM_DAILY_CAP: 'lots' } })).status, 400);
     const pub = await fetch(`${B}/api/app-settings`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-forwarded-for': '203.0.113.5' }, body: JSON.stringify({ values: { BRAND_NAME: 'Hacked' } }) });
