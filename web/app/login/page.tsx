@@ -60,8 +60,8 @@ function LoginForm() {
       </Button>
       <p className="mt-4 text-[12px] leading-relaxed text-subtle">Your admin sets this password. You stay signed in on this device for 7 days.</p>
       <div className="mt-10 flex items-center justify-between border-t border-border pt-5 text-[12.5px]">
-        <Link href="/" className="inline-flex items-center gap-1.5 text-muted hover:text-fg"><ArrowLeft className="size-3.5" />Back to site</Link>
-        <Link href="/" className="inline-flex items-center gap-1 text-muted hover:text-fg">Applying for a job?<ArrowRight className="size-3.5" /></Link>
+        <Link href="/" className="inline-flex items-center gap-1.5 text-muted hover:text-fg"><ArrowLeft className="size-3.5" />Back to home</Link>
+        <Link href="/careers" className="inline-flex items-center gap-1 text-muted hover:text-fg">Applying for a job?<ArrowRight className="size-3.5" /></Link>
       </div>
     </form>
   );
@@ -78,7 +78,7 @@ export default function LoginPage() {
     <main className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
       <section className="relative hidden overflow-hidden bg-[#0f0d1a] text-white lg:flex lg:flex-col lg:justify-between lg:p-12">
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_20%_10%,rgb(99_102_241/0.45),transparent),radial-gradient(50%_40%_at_90%_90%,rgb(168_85_247/0.25),transparent)]" />
-        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:40px_40px]" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.045] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:40px_40px]" />
         <Link href="/" className="relative inline-flex items-center gap-2.5">
           <LogoMark className="bg-white text-[#0f0d1a]" /><span className="text-[15px] font-semibold tracking-tight">{PRODUCT}</span>
         </Link>

@@ -1,4 +1,4 @@
-# Recruit OS: project review
+# Hirevox: project review
 
 A complete description of what the system does, how each part is built, and where it is still weak.
 
@@ -33,7 +33,7 @@ Repository: <https://github.com/vivek-650/telephonic-ai-agent> (branch `main`)
 
 ## 1. Summary
 
-Recruit OS is a self-hosted AI interview platform.
+Hirevox is a self-hosted AI interview platform.
 
 - **For the candidate:** they apply on a careers site, then an AI recruiter interviews them by voice, either in the browser (WebRTC) or by phone.
 - **For the interview:** the AI asks resume-specific questions, can negotiate salary inside an approved budget, and hangs up on its own when the interview is over.
@@ -178,7 +178,7 @@ Recruiters in high-volume hiring (sales, support, operations, factory roles) spe
 
 ```
  Candidate browser ──HTTPS──►┐
-   careers, apply, booking   │     ┌──────────────── Recruit OS (one Node.js process) ────────────────┐
+   careers, apply, booking   │     ┌───────────────── Hirevox (one Node.js process) ──────────────────┐
    interview room ──WebRTC───┼──┐  │ server.js  composition root                                     │
                              │  │  │   ├─ Next.js app (web/)     pages: careers, interview, dashboard │
  Recruiter browser ──HTTPS──►┤  │  │   ├─ API pipeline            lib/ + services/ + routes/ + suite  │
@@ -209,7 +209,8 @@ Every non-API path goes to Next.js. The API keeps its own router, validation, er
 
 ```
 web/                          Next.js app
-  app/(public)/               careers home, apply/[jobId], book
+  app/(marketing)/            product landing page (/)
+  app/(public)/               careers, apply/[jobId], book
   app/dashboard/              13 dashboard pages + layout (shell, auth redirect)
   app/login/                  sign-in
   components/ui/              button, card, badge, avatar, score ring, meter, tabs, stat, form controls, dialog, sheet
@@ -248,7 +249,7 @@ Dependencies point one way: routes, then services, then lib. Each service is a f
 
 ### 5.1 Apply
 
-1. **The candidate opens `/apply/<roleId>`.** Old links of the form `/?role=<id>` redirect there.
+1. **The candidate opens `/apply/<roleId>`.** Old links of the form `/?role=<id>` redirect to `/careers`, which forwards to the role.
 2. **The form posts to `POST /api/applications`.** Validation is a schema (`ApplicationSchema` in `routes/core.js`):
    - name, email, phone and city are required;
    - email and phone formats are checked;
@@ -815,7 +816,7 @@ Who can call each endpoint:
 
 - **`api()`:**
   - sends JSON, with credentials;
-  - on 401 from a protected endpoint, it fires an `auth:required` event, which the dashboard shell turns into a redirect to `/login?next=…`;
+  - on 401 from a protected endpoint, it fires an `auth:required` event, which the dashboard shell turns into a redirect to `/login?next=…` (this covers a session that expires while the tab is open; signed-out page loads are redirected by the server before Next renders, see `pageRedirect` in `server.js`);
   - errors carry the server's message and field details.
 - **`useApi()`:** SWR with optional polling. Live views poll:
 
@@ -832,10 +833,11 @@ Who can call each endpoint:
 
 | Route | Rendering | Notes |
 |---|---|---|
-| `/` | Static page, client data | Hero section, how the interview works, open roles, redirects old `?role=` links |
+| `/` | Static, server-rendered | Product landing page: hero with a live-interview mock, numbers, how it works, features, explainable scoring, recruiter workspace, trust and fairness, FAQ, call to action |
+| `/careers` | Static page, client data | Employer careers page: how the interview works, open roles, forwards old `?role=` links |
 | `/apply/[jobId]` | Dynamic | Two columns: the role on the left (sticky, with a 3-step progress list), the form or interview on the right |
 | `/book` | Static page, client data | Slots grouped by day, the existing booking, a "not open yet" state |
-| `/login` | Static | Sign-in with errors and a return to the page you came from |
+| `/login` | Static, server-gated | Split-screen sign-in: show/hide password, Caps Lock hint, clear errors. The server sends signed-in visitors on to `next` (same-site paths only) |
 | `/dashboard/*` | Static shell, client data | 13 pages (see section 2) |
 
 ### 12.4 Accessibility and responsive layout
@@ -979,7 +981,7 @@ A multi-stage `Dockerfile`:
 ### 15.4 Current deployment
 
 The app runs on a Windows laptop:
-- **Recruit OS:** Node 22.17 on port 4870.
+- **Hirevox:** Node 22.17 on port 4870.
 - **Dograh:** Docker Compose in `F:\Lumos Logic\dograh` with the `local-turn` profile (coturn), and a compose override that fixes the UI's health-check timeout.
 - **Cloudflare quick tunnel** (container `recruit-os-tunnel`) for colleagues.
 

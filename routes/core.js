@@ -38,7 +38,7 @@ export function coreRoutes({ db, candidates, interviews, dograh, relay, hooks })
   const requireCandidate = id => { if (!candidates.exists(id)) throw notFound('candidate'); };
 
   r.get('/api/config', async () => ({
-    careers_url: process.env.CAREERS_URL || '', brand: process.env.BRAND_NAME || 'Recruit OS', agent_name: process.env.AGENT_NAME || 'Priya',
+    careers_url: process.env.CAREERS_URL || '', brand: process.env.BRAND_NAME || 'Hirevox', agent_name: process.env.AGENT_NAME || 'Priya',
     dograh_web: DOGRAH.webReady, dograh_phone: DOGRAH.phoneReady, dograh_api_live: await dograh.reachable(), dograh_base: DOGRAH.base || null,
     embed_token: DOGRAH.webReady ? DOGRAH.embedToken : null, questions: QUESTIONS, criteria: CRITERIA,
   }));

@@ -1,4 +1,4 @@
-# AI Recruiter OS
+# Hirevox
 
 An AI interview platform you run yourself. Candidates apply on a careers page, or come in from a CSV export (Naukri, Indeed, anything). An AI recruiter then interviews each one by voice, in the browser or by phone. It reads their resume, asks resume-specific questions, can negotiate salary inside your budget, and scores them on an explainable 100-point rubric. Recruiters review a ranked pipeline and make every decision.
 
@@ -43,7 +43,7 @@ Bring your own keys. No monthly fee, no lock-in. The API has no runtime dependen
 
 ```
  Naukri / Indeed CSV ──┐
- Careers page form ────┼──►  AI Recruiter OS  ──(call request)──►  Dograh  ──►  phone provider ──► candidate
+ Careers page form ────┼──►  Hirevox  ─────(call request)──►  Dograh  ──►  phone provider ──► candidate
                        │     (this repo)      ◄──(result webhook)──  (voice)
                        │      dashboard, scoring, queue, SQLite
 ```
@@ -161,7 +161,7 @@ npm test
 
 ```
 web/           Next.js app: careers site, interview room, booking, recruiter dashboard
-  app/         routes: (public)/, apply/[jobId], book, login, dashboard/*
+  app/         routes: (marketing)/ landing page, (public)/careers, apply/[jobId], book, login, dashboard/*
   components/  ui/ design system, charts/, interview/ (call room, simulator), candidate/, dashboard/
   lib/         typed API client, shared types, Dograh WebRTC session
 server.js      composition root: hosts the web app, API, Dograh proxy and worker in one process

@@ -1,6 +1,6 @@
 # Architecture
 
-AI Recruiter OS runs AI voice interviews for job applicants, scores them against a 100-point rubric and gives recruiters a ranked pipeline. It is a Next.js web app and a layered Node.js API. Both are served by one process, with an embedded SQLite database. The voice engine ([Dograh](https://github.com/dograh-hq/dograh)) runs separately.
+Hirevox runs AI voice interviews for job applicants, scores them against a 100-point rubric and gives recruiters a ranked pipeline. It is a Next.js web app and a layered Node.js API. Both are served by one process, with an embedded SQLite database. The voice engine ([Dograh](https://github.com/dograh-hq/dograh)) runs separately.
 
 ## System view
 
@@ -10,7 +10,7 @@ flowchart LR
   A -- WebRTC audio via /dograh proxy + TURN --> D
   P[Candidate phone] <-- PSTN --> D
   R[Recruiter dashboard] -- REST, cookie session --> S
-  S[Recruiter OS server<br/>Node 22, node:sqlite] -- create call, fetch run --> D[Dograh voice engine<br/>STT, LLM, TTS]
+  S[Hirevox server<br/>Node 22, node:sqlite] -- create call, fetch run --> D[Dograh voice engine<br/>STT, LLM, TTS]
   D -- end-of-call webhook --> S
   S --- DB[(SQLite, WAL)]
   S -- optional --> L[LLM providers<br/>job drafts, resume analysis]

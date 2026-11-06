@@ -53,7 +53,7 @@ export default function ApplyPage({ params }: { params: Promise<{ jobId: string 
     setBusy(false);
   };
 
-  if (jobs && !job) return <div className="mx-auto max-w-xl px-5 py-20"><Card><EmptyState icon={Briefcase} title="This role is no longer open" action={<Link href="/" className="text-[13px] text-accent">See open roles</Link>} /></Card></div>;
+  if (jobs && !job) return <div className="mx-auto max-w-xl px-5 py-20"><Card><EmptyState icon={Briefcase} title="This role is no longer open" action={<Link href="/careers" className="text-[13px] text-accent">See open roles</Link>} /></Card></div>;
 
   const input = (k: keyof Form, label: string, props: React.InputHTMLAttributes<HTMLInputElement> & { help?: string } = {}) => {
     const { help, className, ...rest } = props;
@@ -63,7 +63,7 @@ export default function ApplyPage({ params }: { params: Promise<{ jobId: string 
   return (
     <div className="mx-auto grid max-w-5xl gap-8 px-5 py-10 lg:grid-cols-[1fr_1.35fr]">
       <aside className="lg:sticky lg:top-24 lg:self-start">
-        <Link href="/" className="mb-5 inline-flex items-center gap-1.5 text-[12.5px] text-muted hover:text-fg"><ArrowLeft className="size-3.5" />All roles</Link>
+        <Link href="/careers" className="mb-5 inline-flex items-center gap-1.5 text-[12.5px] text-muted hover:text-fg"><ArrowLeft className="size-3.5" />All roles</Link>
         {!job ? <Skeleton className="h-60 rounded-xl" /> : (
           <>
             <h1 className="text-[26px] leading-tight font-semibold tracking-tight">{job.title}</h1>

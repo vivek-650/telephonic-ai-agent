@@ -1,4 +1,4 @@
-// AI Recruiter OS: composition root. Wires config, database, services and routes into one HTTP server.
+// Hirevox: composition root. Wires config, database, services and routes into one HTTP server.
 //   applicant -> careers page -> AI voice interview (Dograh) -> webhook -> scoring -> recruiter dashboard
 // Run: node --experimental-sqlite server.js   (no npm dependencies)
 import http from 'node:http';

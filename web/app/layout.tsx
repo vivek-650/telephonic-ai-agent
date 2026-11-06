@@ -5,7 +5,7 @@ import { Toaster } from 'sonner';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: { default: 'Recruit OS', template: '%s · Recruit OS' },
+  title: { default: 'Hirevox', template: '%s · Hirevox' },
   description: 'AI voice interviews, explainable scoring and a recruiter pipeline in one place.',
 };
 

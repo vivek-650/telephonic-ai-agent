@@ -7,7 +7,9 @@ const nextConfig = {
   async redirects() {
     return [
       { source: '/book.html', destination: '/book', permanent: true },
-      { source: '/apply.html', destination: '/', permanent: true },
+      { source: '/apply.html', destination: '/careers', permanent: true },
+      // The careers list moved from / to /careers; old /?role=<id> apply links still land on the role.
+      { source: '/', has: [{ type: 'query', key: 'role', value: '(?<role>.+)' }], destination: '/careers', permanent: false },
       { source: '/dashboard.html', destination: '/dashboard', permanent: true },
       { source: '/engine.html', destination: '/dashboard/engine', permanent: true },
     ];

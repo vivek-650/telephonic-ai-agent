@@ -128,7 +128,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       </nav>
       <div className="space-y-2">
         <VoiceStatus cfg={cfg} />
-        <a href="/" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12.5px] text-muted hover:bg-surface-2 hover:text-fg">
+        <a href="/careers" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12.5px] text-muted hover:bg-surface-2 hover:text-fg">
           <ExternalLink className="size-3.5" /> Open careers page
         </a>
       </div>

@@ -32,7 +32,7 @@ await new Promise(resolve => {
 });
 
 say('');
-say('  AI Recruiter OS');
+say('  Hirevox');
 say('  ----------------');
 if (!existsSync(path.join(ROOT, 'recruiting.db')) && !process.env.DB_PATH) say('  First run: creating the database.');
 if (!hasPdf) say('  Note: PDF resume upload needs pdftotext (macOS: brew install poppler, Ubuntu: sudo apt install poppler-utils). Everything else works without it.');

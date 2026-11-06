@@ -1,4 +1,4 @@
-// Typed client for the Recruit OS API (served by the same origin).
+// Typed client for the Hirevox API (served by the same origin).
 import useSWR, { type SWRConfiguration } from 'swr';
 
 export class ApiError extends Error {
