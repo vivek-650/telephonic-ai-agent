@@ -4,9 +4,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
   LayoutDashboard, KanbanSquare, Users, PhoneCall, Briefcase, Upload, CalendarDays, FileSignature,
-  UsersRound, Workflow, Cpu, Settings, ExternalLink, Moon, Sun, LogOut, Menu, X, Sparkles,
+  UsersRound, Workflow, Cpu, Settings, ExternalLink, Moon, Sun, LogOut, Menu, X, Loader2,
 } from 'lucide-react';
+import { mutate } from 'swr';
 import { api, post, useApi } from '@/lib/api';
+import { Logo } from '@/components/brand/logo';
 import type { Config } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { AssistantButton } from './assistant';
@@ -86,23 +88,26 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { data: cfg } = useApi<Config>('/api/config', 30000);
   const { data: me } = useApi<{ auth_required: boolean; logged_in: boolean }>('/api/me');
 
+  // The server redirects signed-out page loads; this covers a session that expires while the tab is open.
   useEffect(() => {
-    const go = () => router.replace(`/login?next=${encodeURIComponent(location.pathname)}`);
+    const go = () => router.replace(`/login?next=${encodeURIComponent(location.pathname + location.search)}`);
     window.addEventListener('auth:required', go);
     return () => window.removeEventListener('auth:required', go);
   }, [router]);
-  useEffect(() => { if (me?.auth_required && !me.logged_in) router.replace(`/login?next=${encodeURIComponent(pathname)}`); }, [me, pathname, router]);
+  useEffect(() => { if (me?.auth_required && !me.logged_in) router.replace(`/login?next=${encodeURIComponent(location.pathname + location.search)}`); }, [me, router]);
   useEffect(() => setOpen(false), [pathname]);
+  const allowed = !!me && (!me.auth_required || me.logged_in);
 
   const isActive = (href: string) => (href === '/dashboard' ? pathname === href : pathname.startsWith(href));
-  const logout = async () => { await post('/api/logout').catch(() => {}); router.replace('/login'); };
+  const logout = async () => {
+    await post('/api/logout').catch(() => {});
+    await mutate(() => true, undefined, { revalidate: false }); // drop cached candidate data from memory
+    router.replace('/login');
+  };
 
   const sidebar = (
     <div className="flex h-full flex-col gap-5 px-3 py-4">
-      <Link href="/dashboard" className="flex items-center gap-2.5 px-2">
-        <span className="grid size-7 place-items-center rounded-lg bg-fg text-bg"><Sparkles className="size-3.5" /></span>
-        <span className="text-[14px] font-semibold tracking-tight">{cfg?.brand || 'Recruit OS'}</span>
-      </Link>
+      <Link href="/dashboard" className="px-2"><Logo /></Link>
       <nav className="flex-1 space-y-5 overflow-y-auto">
         {NAV.map(g => (
           <div key={g.section}>
@@ -154,7 +159,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             </button>
           )}
         </header>
-        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 lg:px-8 lg:py-8">{children}</main>
+        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 lg:px-8 lg:py-8">
+          {allowed ? children : <div className="grid min-h-[50vh] place-items-center" aria-busy="true"><Loader2 className="size-5 animate-spin text-subtle" /><span className="sr-only">Checking your session</span></div>}
+        </main>
       </div>
     </div>
   );

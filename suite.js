@@ -1092,5 +1092,5 @@ export function createSuite(ctx) {
     return false;
   }
 
-  return { route, afterApply, afterScreen, referenceWebhook, rejectionWebhook, startWorker: () => setInterval(() => tick().catch(() => {}), 10000) };
+  return { route, isAuthed: authed, authRequired, afterApply, afterScreen, referenceWebhook, rejectionWebhook, startWorker: () => setInterval(() => tick().catch(() => {}), 10000) };
 }
