@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { screeningContext, parseWebhook, answersFromDograh, transcriptFromRun, normaliseNegotiation, isIncomplete } from '../../services/screening.js';
 import { scoreCandidate, mentionsSkill, RUBRIC_VERSION } from '../../scoring.js';
+import { dialString } from '../../services/dograh.js';
 
 const file = f => readFileSync(fileURLToPath(new URL(`../../dograh/${f}`, import.meta.url)), 'utf8');
 const JOB = { title: 'Inside Sales Executive', company: 'Acme', location: 'Pune', min_years: 2, max_salary: 60000, max_notice_days: 30, locations: ['pune'], must_skills: ['crm', 'cold calling'], negotiable: 1, stretch_pct: 10 };
@@ -77,4 +78,9 @@ test('the rubric is versioned and always sums to 100', () => {
   assert.match(RUBRIC_VERSION, /^\d{4}\.\d{2}-\d+$/);
   const r = scoreCandidate(CAND, JOB, { years_experience: 3 });
   assert.equal(r.breakdown.reduce((s, b) => s + b.max, 0), 100);
+});
+
+test('a SIP tech prefix goes in front of the digits, and nothing changes without one', () => {
+  assert.equal(dialString('+910000000001', '45454'), '45454910000000001');
+  assert.equal(dialString('+910000000001', ''), '+910000000001');
 });
