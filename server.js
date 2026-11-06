@@ -12,6 +12,7 @@ import { createLogger } from './lib/logger.js';
 import { openDatabase, runMigrations, json } from './lib/db.js';
 import { HttpError, send, readJson, isReply, SECURITY_HEADERS, clientIp } from './lib/http.js';
 import { metrics } from './lib/metrics.js';
+import { safeNextPath } from './lib/session.js';
 import { MIGRATIONS } from './db/migrations.js';
 import { scoreCandidate } from './scoring.js';
 import { createLLM } from './llm.js';
@@ -111,6 +112,16 @@ async function prepareWeb() {
 // dashboard password is set; then the login gate protects candidate data and the careers page can be shared.
 const tunnelAllowed = req => !req.headers['cf-connecting-ip'] || Boolean(process.env.ADMIN_PASSWORD);
 
+// Recruiter pages need a session when a dashboard password is set. Checking before Next renders anything means a
+// signed-out visitor never sees the dashboard shell; the API still enforces the same rule on every call.
+function pageRedirect(req, u) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return null;
+  const p = u.pathname;
+  if ((p === '/dashboard' || p.startsWith('/dashboard/')) && !suite.isAuthed(req)) return `/login?next=${encodeURIComponent(p + u.search)}`;
+  if (p === '/login' && (!suite.authRequired() || suite.isAuthed(req))) return safeNextPath(u.searchParams.get('next'));
+  return null;
+}
+
 async function dispatch(req, res, u, ctx) {
   const p = u.pathname, m = req.method;
   if (!tunnelAllowed(req) && !['/api/webhooks/dograh', '/api/health'].includes(p)) throw new HttpError(403, 'not available over the public tunnel');
@@ -137,6 +148,8 @@ async function dispatch(req, res, u, ctx) {
   if (p.startsWith('/api/')) throw new HttpError(404, 'not found');
   if (nextHandle) {
     ctx.route = 'web';
+    const to = pageRedirect(req, u);
+    if (to) { res.writeHead(302, { Location: to, 'Cache-Control': 'no-store' }); return res.end(); }
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v); // must be set before Next starts the response
     return nextHandle(req, res);
   }

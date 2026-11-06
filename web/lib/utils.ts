@@ -36,3 +36,6 @@ export type Tone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger';
 export const verdictTone = (v?: Verdict | null): Tone => (v === 'Strong' ? 'success' : v === 'Maybe' ? 'warning' : v === 'Reject' ? 'danger' : 'neutral');
 export const stageTone = (s: Stage): Tone => (s === 'hired' || s === 'shortlisted' ? 'success' : s === 'rejected' ? 'danger' : s === 'review' ? 'warning' : s === 'interview' ? 'accent' : 'neutral');
 export const scoreTone = (n?: number | null): Tone => (n == null ? 'neutral' : n >= 75 ? 'success' : n >= 55 ? 'warning' : 'danger');
+
+// Same rule as safeNextPath in lib/session.js: only same-site paths, never "//host" or "/\host".
+export const safeNext = (raw?: string | null, fallback = '/dashboard') => (raw && /^\/(?![/\\])/.test(raw) && !/[\u0000-\u001f]/.test(raw) ? raw : fallback);

@@ -8,7 +8,7 @@ import { retry, CircuitBreaker, isTransient } from '../../lib/resilience.js';
 import { createRateLimiter } from '../../lib/rate-limit.js';
 import { createMetrics } from '../../lib/metrics.js';
 import { runMigrations, transaction, json } from '../../lib/db.js';
-import { issueSession, verifySession } from '../../lib/session.js';
+import { issueSession, verifySession, safeNextPath } from '../../lib/session.js';
 import { redact, createLogger } from '../../lib/logger.js';
 import { validateConfig } from '../../lib/config.js';
 
@@ -104,6 +104,11 @@ test('sessions are signed, expire, and die when the password changes', () => {
   assert.equal(verifySession(tok, { ...cfg, password: 'new-password', now: 1000 }), false, 'password rotated');
   assert.equal(verifySession(tok.slice(0, -2) + 'xx', { ...cfg, now: 1000 }), false, 'tampered');
   assert.equal(verifySession('', cfg), false);
+});
+
+test('sign-in redirects stay on this site', () => {
+  assert.equal(safeNextPath('/dashboard/candidates?stage=review'), '/dashboard/candidates?stage=review');
+  for (const bad of ['//evil.com', '/\\evil.com', 'https://evil.com', 'javascript:alert(1)', '/\tx', '', null]) assert.equal(safeNextPath(bad), '/dashboard', String(bad));
 });
 
 test('logger redacts secrets and personal data', () => {
