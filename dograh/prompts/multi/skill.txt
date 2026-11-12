@@ -1,0 +1,3 @@
+Ask one practical scenario, max 20 words, on the first skill in: {{job_must_skills | fallback:their main skill}}.
+Example: "Say a page suddenly loads slowly for users, what would you check first?"
+After their reply, whatever it is, call skill_done.

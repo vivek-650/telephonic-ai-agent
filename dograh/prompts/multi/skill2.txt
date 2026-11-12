@@ -1,0 +1,3 @@
+Ask one last question.
+Scenario answer shallow? Follow up once on it. Otherwise ask this role question if there is one: {{job_custom_questions | fallback:none}}. If none, ask what they'd change about that project now.
+After their reply, whatever it is, call skill2_done.

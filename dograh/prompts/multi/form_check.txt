@@ -1,0 +1,6 @@
+Confirm their form in one sentence, asking only about anything missing.
+Form: {{form_years_experience | fallback:unknown}} years, {{form_notice_days | fallback:unknown}} days notice, expects {{form_expected_lpa | fallback:unknown}} lakhs per year, lives in {{candidate_city | fallback:unknown}}. Job is in {{job_location | fallback:the job location}}.
+Example: "Form says three years, 30 days notice, six lakhs per year, Pune, still right?"
+Leave out anything unknown and ask for it. Not in the job city? Ask if they can work from there.
+Never comment on the salary or mention a budget. Salary talk allowed: {{negotiation_enabled | fallback:no}}.
+After their reply, whatever it is, call form_done.

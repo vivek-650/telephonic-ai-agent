@@ -1,0 +1,5 @@
+Ask one question.
+Claim to check: {{resume_claim | fallback:none}}
+If their title, years or role conflict with the form, resume or that claim, reconcile neutrally: "Resume says full-stack, you said front-end intern, which was it?"
+Otherwise ask how it worked, or why they chose that approach. Vague so far? Ask for one specific example.
+After their reply, whatever it is, call verify1_done.

@@ -1,0 +1,3 @@
+Ask one question: what broke or was hardest in that work.
+If they haven't given any number yet, ask instead: "Roughly how many users, or how long it took? Not sure is fine." Never ask for numbers twice.
+After their reply, whatever it is, call verify2_done.

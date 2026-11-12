@@ -218,9 +218,10 @@ try {
     const s = await req(`/api/candidates/${a.data.id}/screenings`, 'POST', { mode: 'phone' });
     const call = dograhCalls.at(-1);
     assert.equal(call.body.initial_context.has_resume, 'yes');
-    assert.match(call.body.initial_context.resume_summary, /Gaps: 2021-2023/);
-    assert.match(call.body.initial_context.resume_probes, /work until 2021 and then nothing until 2023/);
-    assert.match(call.body.initial_context.resume_probes, /You claim Node\.js/);
+    assert.match(call.body.initial_context.resume_summary, /gap 2021-2023/);
+    assert.match(call.body.initial_context.resume_probes, /What were you doing 2021-2023\?/);
+    assert.match(call.body.initial_context.resume_probes, /node\.js/i);
+    assert.ok(call.body.initial_context.resume_summary.length + call.body.initial_context.resume_probes.length + call.body.initial_context.resume_claim.length <= 400, 'resume brief stays compact');
   });
 
   await t('no resume means no probes in call context', async () => {
@@ -293,7 +294,7 @@ try {
   await t('engine room: overview masks keys, preview shows compaction and request, trace records a call', async () => {
     const o = (await req('/api/engine/overview')).data;
     assert.equal(o.dograh.phone_ready, true); assert.ok(!JSON.stringify(o).includes('dgr_test'), 'API key must be masked');
-    assert.match(o.prompts.screener, /recruiting coordinator/);
+    assert.match(o.prompts.screener, /AI assistant on the/);
     const p = (await req('/api/engine/preview', 'POST', { resume_text: 'Sales Executive, Acme Corp 2019-2021. Team Lead, Beta Ltd 2023-Present. Skills: CRM, Salesforce.' })).data;
     assert.equal(p.stage_2_compaction.gaps.length, 1); assert.ok(p.stage_2_compaction.probes.length >= 1);
     assert.equal(p.stage_4_dograh_request.headers['X-API-Key'].includes('dgr_test'), false);
@@ -412,7 +413,7 @@ try {
     assert.equal(j.status, 201); assert.equal(j.data.agent_ready, true);
     assert.equal(dograhCalls.filter(c => c.url === '/api/v1/workflow/create/definition').length, 1);
     const put = dograhCalls.find(c => c.url === '/api/v1/workflow/55' && c.body?.workflow_configurations);
-    assert.equal(put.body.workflow_configurations.model_voice_override.voice, 'Kore'); assert.equal(put.body.workflow_configurations.max_call_duration, 900);
+    assert.equal(put.body.workflow_configurations.model_voice_override.voice, 'Kore'); assert.equal(put.body.workflow_configurations.max_call_duration, 480); assert.equal(put.body.workflow_configurations.max_user_idle_timeout, 12);
     assert.ok(!put.body.workflow_definition.nodes.find(n => n.type === 'trigger').data.trigger_path, 'the copy must not reuse the base trigger path');
     const a = await req('/api/applications', 'POST', { ...applicant, job_id: j.data.id, name: 'Consult Candidate', email: 'cc@example.com' });
     assert.equal((await req(`/api/candidates/${a.data.id}/screenings`, 'POST', { mode: 'phone' })).status, 201);
