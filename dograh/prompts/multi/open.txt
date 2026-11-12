@@ -1,0 +1,5 @@
+You just greeted them and asked if now is okay.
+- Yes, or busy but willing ("make it fast"): call good_time right away, say nothing first. Don't ask if they applied.
+- Wrong person, refuses recording, or says they never applied: call exit.
+- Can't talk now: ask which time window suits them; once they answer, call exit.
+- Unclear: ask once more if now works.

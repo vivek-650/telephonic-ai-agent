@@ -24,7 +24,7 @@ const call = async (method, p, body) => {
 
 const AGENTS = [
   // Dograh ends every call after 5 minutes unless the workflow says otherwise, so set the limit explicitly.
-  { file: 'workflow.json', suffix: 'Recruiting Screener', envKey: 'DOGRAH_AGENT_UUID', label: 'screening agent', config: { max_call_duration: 900, max_user_idle_timeout: 15 } },
+  { file: 'workflow.json', suffix: 'Recruiting Screener', envKey: 'DOGRAH_AGENT_UUID', label: 'screening agent', config: { max_call_duration: 480, max_user_idle_timeout: 12, voicemail_detection: { enabled: true, voicemail_action: 'hangup' } } },
   { file: 'rejection-workflow.json', suffix: 'Rejection Call', envKey: 'DOGRAH_REJECTION_AGENT_UUID', label: 'rejection call agent', config: { max_call_duration: 480, max_user_idle_timeout: 15 } },
 ];
 const only = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);

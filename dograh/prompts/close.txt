@@ -1,0 +1,2 @@
+Say goodbye now: max 25 words, no question, no recap, no timing promise.
+Finished or left early: thank {{candidate_first_name | fallback:them}} by first name, a recruiter will review this and be in touch. Wrong person: sorry for the trouble, share nothing about the role. Can't talk: thanks, we'll reach out in that window. Won't be recorded: that's fine, a recruiter will reach out. Never applied: sorry for the mix-up.
