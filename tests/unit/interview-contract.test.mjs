@@ -115,3 +115,14 @@ test('the rubric is versioned and always sums to 100', () => {
   const r = scoreCandidate(CAND, JOB, { years_experience: 3 });
   assert.equal(r.breakdown.reduce((s, b) => s + b.max, 0), 100);
 });
+
+test('spoken Hindi and Hinglish numbers are normalised to English values', () => {
+  const a = answersFromDograh({ gathered_context: { years_experience: 'teen saal', notice_period_days: 'ek mahina', expected_salary: 'chaudah lakh saal ka', relocation_ok: 'haan, kar sakti hoon' } });
+  assert.deepEqual(a, { years_experience: 3, notice_days: 30, expected_salary: 116667, relocation_ok: true });
+  const b = answersFromDograh({ gathered_context: { years_experience: 'डेढ़ साल', notice_period_days: 'turant', expected_salary: 'pachas hazaar mahina' } });
+  assert.deepEqual(b, { years_experience: 1.5, notice_days: 0, expected_salary: 50000 });
+  assert.equal(answersFromDograh({ gathered_context: { notice_period_days: 'do hafte' } }).notice_days, 14);
+  assert.equal(answersFromDograh({ gathered_context: { expected_salary: 'सात लाख' } }).expected_salary, 58333);
+  assert.equal(answersFromDograh({ gathered_context: { expected_salary: '50 hazar per month' } }).expected_salary, 50000, 'hazar is thousand, not 50 rupees');
+  assert.equal(answersFromDograh({ gathered_context: { years_experience: 'I do have 3 years' } }).years_experience, 3, 'English "do" is not the Hindi 2');
+});

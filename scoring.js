@@ -27,10 +27,36 @@ function firstNumber(s) {
   return m[1] !== undefined ? Number(m[1]) : WORDNUM[m[3]];
 }
 
+// Spoken Hindi / Hinglish answers ("teen saal", "ek mahina", "chaudah lakh", "सात लाख") -> English digits and units,
+// so the parser below reads them like English. A Hindi number word is only converted when a unit follows it:
+// "do" is also English ("I do have 3 years").
+const HI_NUM = {
+  ek: 1, एक: 1, do: 2, दो: 2, teen: 3, tin: 3, तीन: 3, char: 4, chaar: 4, चार: 4, paanch: 5, panch: 5, pach: 5, पांच: 5, पाँच: 5,
+  chhe: 6, chah: 6, chhah: 6, छह: 6, छः: 6, saat: 7, सात: 7, aath: 8, आठ: 8, nau: 9, नौ: 9, das: 10, दस: 10,
+  gyarah: 11, barah: 12, baarah: 12, terah: 13, chaudah: 14, chaudha: 14, pandrah: 15, pandra: 15, solah: 16, satrah: 17,
+  atharah: 18, bees: 20, बीस: 20, pachees: 25, tees: 30, तीस: 30, chalis: 40, pachas: 50, pachaas: 50, पचास: 50, sau: 100,
+  dedh: 1.5, derh: 1.5, डेढ़: 1.5, dhai: 2.5, ढाई: 2.5, aadha: 0.5,
+};
+const HI_UNITS = [
+  [/(?:saal|sal|varsh|baras|साल|वर्ष)(?:\s+ka|\s+ki|\s+ke)?/g, ' years '],
+  [/(?:mahin[aeo]|maheen[aeo]|महीन[ाे]|महीना|महीने)/g, ' month '],
+  [/(?:hafte|hafta|haftey|हफ्ते|हफ़्ते|हफ्ता)/g, ' week '],
+  [/(?:\bdin\b|दिन)/g, ' days '], [/(?:laakh|लाख)/g, ' lakh '], [/(?:hazaar|hazar|hajar|हज़ार|हजार)/g, ' thousand '],
+  [/(?:turant|tatkal|तुरंत)/g, ' immediate '],
+];
+const UNIT_AFTER = '(?=\\s*(?:years?|months?|weeks?|days?|lakh|lac|thousand|k\\b))';
+export function normaliseSpokenNumbers(raw) {
+  let s = String(raw).toLowerCase().replace(/[०-९]/g, d => String('०१२३४५६७८९'.indexOf(d)));
+  for (const [re, en] of HI_UNITS) s = s.replace(re, en);
+  const words = Object.keys(HI_NUM).sort((a, b) => b.length - a.length).join('|');
+  s = s.replace(new RegExp(`(^|[^\\p{L}])(${words})(?![\\p{L}])${UNIT_AFTER}`, 'gu'), (_, pre, w) => `${pre}${HI_NUM[w]}`);
+  return s.replace(/\s+/g, ' ').trim();
+}
+
 export function parseAnswer(q, raw) {
   if (raw === null || raw === undefined) return raw;
   if (typeof raw === 'number' || typeof raw === 'boolean') return raw;
-  const s = String(raw).trim().toLowerCase();
+  const s = normaliseSpokenNumbers(String(raw).trim());
   switch (q.type) {
     case 'number': {
       const n = firstNumber(s);

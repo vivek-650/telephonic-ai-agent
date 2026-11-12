@@ -1,0 +1,32 @@
+{
+  "nodes": [
+    {
+      "id": "start",
+      "type": "startCall",
+      "position": { "x": 0, "y": 0 },
+      "data": {
+        "name": "Candidate",
+        "greeting_type": "text",
+        "greeting": "Hello?",
+        "prompt": "You are a job candidate, {{candidate_first_name | fallback:Riya}}, on a screening phone call for a {{job_title | fallback:Backend Engineer}} role. The other side of this chat is the interviewer. Stay in character: {{persona | fallback:a normal candidate}}\nReply the way people talk on the phone: one to three short sentences, no lists, no markdown, never describe actions. Respond to what the interviewer just said. Never end the conversation and never say goodbye unless the interviewer says goodbye first.",
+        "allow_interrupt": true,
+        "add_global_prompt": false,
+        "extraction_enabled": false
+      }
+    },
+    {
+      "id": "end",
+      "type": "endCall",
+      "position": { "x": 0, "y": 200 },
+      "data": { "name": "Hang up", "prompt": "Say only: Bye.", "add_global_prompt": false }
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-end",
+      "source": "start",
+      "target": "end",
+      "data": { "label": "Hang up", "condition": "Only after the interviewer has clearly said goodbye." }
+    }
+  ]
+}
