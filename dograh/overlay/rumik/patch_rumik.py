@@ -21,7 +21,8 @@ def patch(path: pathlib.Path, edits):
         count = src.count(anchor)
         if count != 1:
             sys.exit(f"{path.name}: anchor found {count} times, expected 1:\n{anchor}")
-        src = src.replace(anchor, insert + anchor if where == "before" else anchor + insert)
+        new = {"before": insert + anchor, "after": anchor + insert, "replace": insert}[where]
+        src = src.replace(anchor, new)
     path.write_text(src)
     print(f"{path.name}: patched")
 
@@ -127,6 +128,14 @@ patch(API / "pipecat/service_factory.py", [
      f"from pipecat_rumik import RumikTTSService, RumikTTSSettings  {MARK}\n", "after"),
     ("    elif user_config.tts.provider == ServiceProviders.SARVAM.value:\n        # Map Sarvam language code to pipecat Language enum for TTS\n",
      RUMIK_FACTORY, "before"),
+    # Groq gpt-oss models reason before answering, and those tokens count towards the free tier's 8,000 tokens a
+    # minute. Low effort keeps replies fast and cheap; other Groq models are unchanged.
+    ("            settings=GroqLLMSettings(model=model, **sampling_settings),\n",
+     "            settings=GroqLLMSettings(\n"
+     "                model=model,\n"
+     "                **sampling_settings,\n"
+     f"                **({{\"extra\": {{\"reasoning_effort\": \"low\"}}}} if \"gpt-oss\" in model else {{}}),  {MARK}\n"
+     "            ),\n", "replace"),
 ])
 
 patch(API / "configuration/check_validity.py", [

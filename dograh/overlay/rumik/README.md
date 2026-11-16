@@ -21,6 +21,7 @@ fails the build instead of producing a half-patched image.
 | `registry.py` | `rumik` provider, `RumikTTSConfiguration` (model, optional speaker, description, sampling), TTS union |
 | `service_factory.py` | Builds `RumikTTSService`, with the same recording-text skip and silence settings as every other voice, and validates `gateway_url` |
 | `check_validity.py` | Checks the key by minting a streaming session (401 or 403 means a bad key). No audio is generated |
+| `service_factory.py` (Groq) | `reasoning_effort: low` for gpt-oss models, so reasoning does not eat the free tier's 8,000 tokens a minute |
 | `pipecat_rumik/settings.py` | Compatibility fix: 0.1.4 imports a private `_NotGiven` that Dograh's pipecat fork does not have. Without it the API cannot start |
 
 `pipecat-rumik==0.1.4` is installed with `--no-deps --require-hashes`. `--no-deps` stops it from pulling
