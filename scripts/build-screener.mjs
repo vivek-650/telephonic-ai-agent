@@ -1,8 +1,9 @@
 // Builds dograh/workflow.json (the screening agent) from the prompts in dograh/prompts/.
 // The prompt files are the source of truth; edit them, then run: node scripts/build-screener.mjs
 //
-// Default graph (what ships): one interview node with a numbered Q1-Q6 plan, then one endCall node whose
-// goodbye fits the reason and which hangs up. A one-question-per-node graph (prompts in dograh/prompts/multi/)
+// Default graph (what ships): one screening node that speaks first (no fixed greeting, so web mode can skip the
+// identity check) and runs the staged call flow in global.txt + interview.txt, then one endCall node that says
+// "Take care, bye!" after the agent's own goodbye and hangs up. A one-question-per-node graph (prompts in dograh/prompts/multi/)
 // builds with --multi; in testing the hosted model skipped or doubled transitions there, see CHANGES.md.
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -51,7 +52,7 @@ const ALL_VARS = Object.values(VARS).flat();
 const node = (id, type, y, data) => ({ id, type, position: { x: 0, y }, data });
 const extraction = vars => (vars.length ? { extraction_enabled: true, extraction_prompt: EXTRACT, extraction_variables: vars } : { extraction_enabled: false });
 const edge = (source, target, label, condition) => ({ id: `${source}-${target}-${label.toLowerCase().replace(/\W+/g, '-')}`, source, target, data: { label, condition } });
-const greeting = { greeting_type: 'text', greeting: P('greeting'), allow_greeting_interrupt: true };
+const greeting = MULTI ? { greeting_type: 'text', greeting: P('multi/greeting'), allow_greeting_interrupt: true } : {};
 
 const common = [
   { id: 'trig', type: 'trigger', position: { x: -360, y: 320 }, data: { name: 'Phone trigger' } },
@@ -72,11 +73,11 @@ if (!MULTI) {
   // Extraction runs once, as the call moves to the goodbye (or at hang-up if the candidate drops).
   nodes = [
     { id: 'global', type: 'globalNode', position: { x: -360, y: 0 }, data: { name: 'Persona and rules', prompt: P('global') } },
-    node('start', 'startCall', 0, { name: 'Interview', ...greeting, prompt: P('interview'), allow_interrupt: true, add_global_prompt: true, ...extraction(ALL_VARS) }),
-    node('end', 'endCall', 180, { name: 'Goodbye', prompt: P('close'), allow_interrupt: false, add_global_prompt: true }),
+    node('start', 'startCall', 0, { name: 'Screening', prompt: P('interview'), allow_interrupt: true, add_global_prompt: true, ...extraction(ALL_VARS) }),
+    node('end', 'endCall', 180, { name: 'End call', prompt: P('close'), allow_interrupt: false, add_global_prompt: false }),
     ...common,
   ];
-  edges = [edge('start', 'end', 'End call', 'Q6 was answered, or any end reason in your instructions applies. Call it instead of saying goodbye yourself.')];
+  edges = [edge('start', 'end', 'End call', 'Call this immediately after you say your final goodbye: at the end of Stage 7, or when any instruction says to end the call (wrong person, did not apply, not interested, not a good time, does not want to be recorded, wants a human, abusive, bad line), or when the person clearly asks to stop. Never call it before the goodbye and never keep talking after it.')];
 } else {
   const M = name => P(`multi/${name}`);
   const step = (id, name, prompt, y, vars) => node(id, 'agentNode', y, { name, prompt: M(prompt), allow_interrupt: true, add_global_prompt: true, ...extraction(vars) });

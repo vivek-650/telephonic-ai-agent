@@ -14,7 +14,7 @@ export class DograhError extends Error {
 }
 
 const AGENT_KINDS = {
-  screener: { uuid: () => DOGRAH.agentUuid, wid: () => DOGRAH.workflowId, cfg: { max_call_duration: 480, max_user_idle_timeout: 12, voicemail_detection: { enabled: true, voicemail_action: 'hangup' } }, uuidCol: 'agent_uuid', widCol: 'agent_wid', label: 'Screener', file: 'workflow.json', suffix: 'Recruiting Screener', uuidKey: 'DOGRAH_AGENT_UUID', widKey: 'DOGRAH_WORKFLOW_ID' },
+  screener: { uuid: () => DOGRAH.agentUuid, wid: () => DOGRAH.workflowId, cfg: { max_call_duration: 720, max_user_idle_timeout: 15, voicemail_detection: { enabled: true, voicemail_action: 'hangup' } }, uuidCol: 'agent_uuid', widCol: 'agent_wid', label: 'Screener', file: 'workflow.json', suffix: 'Recruiting Screener', uuidKey: 'DOGRAH_AGENT_UUID', widKey: 'DOGRAH_WORKFLOW_ID' },
   rejection: { uuid: () => DOGRAH.rejectionAgentUuid, wid: () => DOGRAH.rejectionWorkflowId, cfg: { max_call_duration: 480, max_user_idle_timeout: 15 }, uuidCol: 'rej_agent_uuid', widCol: 'rej_wid', label: 'Rejection', file: 'rejection-workflow.json', suffix: 'Rejection Call', uuidKey: 'DOGRAH_REJECTION_AGENT_UUID', widKey: 'DOGRAH_REJECTION_WORKFLOW_ID' },
 };
 

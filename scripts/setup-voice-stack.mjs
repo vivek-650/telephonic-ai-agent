@@ -74,7 +74,7 @@ const wid = arg('workflow');
 if (wid && wid !== true) {
   const live = await call('GET', `/api/v1/workflow/fetch/${wid}`);
   const wc = { ...(live.workflow_configurations || {}) };
-  if (arg('off')) delete wc.model_configuration_override;
+  if (arg('off')) wc.model_configuration_override = {}; // omitting the key keeps the stored override; {} means inherit the default
   else wc.model_configuration_override = { model_configuration_uuid: cfg.uuid };
   await call('POST', `/api/v1/workflow/${wid}/create-draft`).catch(() => {});
   await call('PUT', `/api/v1/workflow/${wid}`, { name: live.name, workflow_definition: live.workflow_definition, workflow_configurations: wc });
