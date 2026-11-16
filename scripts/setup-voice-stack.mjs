@@ -6,6 +6,8 @@
 //   node scripts/setup-voice-stack.mjs --workflow=7         make workflow 7 run on it (a per-workflow override)
 //   node scripts/setup-voice-stack.mjs --workflow=7 --off   put workflow 7 back on the organisation default
 //   node scripts/setup-voice-stack.mjs --default            make it the organisation default (every agent)
+//   add --llm=dograh to keep Dograh's own AI model as the brain (Deepgram + Dograh + Rumik): any prompt size works,
+//   and Dograh credits are charged for the brain only. That is a separate configuration, so both can exist.
 //
 // Groq free tier: 8,000 tokens per minute and 1,000 requests a day, per model, and cached tokens still count. Every
 // reply resends the whole prompt, so the screener prompt (~6,000 tokens) fits about one reply a minute there. On a
@@ -20,7 +22,8 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 loadEnvFile(ROOT);
 const arg = k => process.argv.find(a => a === `--${k}` || a.startsWith(`--${k}=`))?.split('=')[1] ?? (process.argv.includes(`--${k}`) ? true : undefined);
 const env = (k, d = '') => String(process.env[k] ?? d).trim();
-export const CONFIG_NAME = 'Hirevox voice: Deepgram + Groq + Rumik';
+const DOGRAH_LLM = arg('llm') === 'dograh';
+export const CONFIG_NAME = DOGRAH_LLM ? 'Hirevox voice: Deepgram + Dograh AI + Rumik' : 'Hirevox voice: Deepgram + Groq + Rumik';
 
 async function call(method, p, body) {
   const r = await fetch(`${DOGRAH.base}${p}`, { method, headers: { 'Content-Type': 'application/json', 'X-API-Key': DOGRAH.apiKey }, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(30000) });
@@ -37,10 +40,10 @@ const VENDORS = [
     settings: { model: env('VOICE_LLM_MODEL', 'openai/gpt-oss-120b'), temperature: Number(env('VOICE_LLM_TEMPERATURE', '0.3')) } },
   { role: 'tts', name: 'Hirevox Rumik', provider: 'rumik', key: 'RUMIK_API_KEY',
     settings: {
-      model: env('RUMIK_MODEL', 'mulberry'), voice: env('RUMIK_VOICE'),
+      model: env('RUMIK_MODEL', 'mulberry'), voice: env('RUMIK_VOICE', 'speaker_2'), // a fixed speaker keeps the voice the same on every reply
       description: env('RUMIK_DESCRIPTION', "a warm, clear young Indian woman's voice, friendly and professional, natural conversational pace, speaking Indian English and Hinglish"),
     } },
-];
+].filter(v => !(DOGRAH_LLM && v.role === 'llm'));
 
 if (!DOGRAH.base || !DOGRAH.apiKey) throw new Error('Set DOGRAH_BASE_URL and DOGRAH_API_KEY first.');
 const missing = VENDORS.filter(v => !env(v.key)).map(v => v.key);
@@ -66,7 +69,12 @@ for (const v of VENDORS) {
 // 2. One named configuration. Embeddings stay on Dograh (only used by knowledge-base agents).
 const configs = await call('GET', `${MC}/model-configurations`);
 const orgDefault = configs.find(c => c.name === 'Organization default');
-const fallbackModel = env('VOICE_LLM_FALLBACK_MODEL', 'openai/gpt-oss-20b');
+if (DOGRAH_LLM) {
+  if (!orgDefault?.configuration?.llm) throw new Error('No "Organization default" configuration with a Dograh model to reuse.');
+  selection.llm = orgDefault.configuration.llm;
+  console.log('Brain: Dograh model from the organisation default');
+}
+const fallbackModel = DOGRAH_LLM ? '' : env('VOICE_LLM_FALLBACK_MODEL', 'openai/gpt-oss-20b');
 const llm_fallback = fallbackModel && fallbackModel !== selection.llm.settings.model
   ? { version: 1, rules: [{ condition: { type: 'error' }, target: { provider_connection_uuid: selection.llm.provider_connection_uuid, settings: { ...selection.llm.settings, model: fallbackModel } } }] }
   : null;
@@ -84,7 +92,7 @@ if (wid && wid !== true) {
   const wc = { ...(live.workflow_configurations || {}) };
   const def = live.workflow_definition;
   const size = Math.ceil(def.nodes.filter(n => n.type === 'globalNode' || n.type === 'startCall').reduce((t, n) => t + String(n.data?.prompt || '').length, 0) / 4);
-  if (!arg('off') && size > 2500) console.warn(`Warning: this agent's prompt is ~${size} tokens. On the Groq free tier (8,000 tokens a minute) that leaves room for about ${Math.max(1, Math.floor(8000 / size))} reply a minute. Too big for a real call on the free tier; keep this agent on Dograh's models.`);
+  if (!arg('off') && !DOGRAH_LLM && size > 2500) console.warn(`Warning: this agent's prompt is ~${size} tokens. On the Groq free tier (8,000 tokens a minute) that leaves room for about ${Math.max(1, Math.floor(8000 / size))} reply a minute. Too big for a real call on the free tier; keep this agent on Dograh's models.`);
   if (arg('off')) wc.model_configuration_override = {}; // omitting the key keeps the stored override; {} means inherit the default
   else wc.model_configuration_override = { model_configuration_uuid: cfg.uuid };
   await call('POST', `/api/v1/workflow/${wid}/create-draft`).catch(() => {});

@@ -1,3 +1,18 @@
+# Screening prompt: fixes from the 16 Nov test calls
+
+Targeted edits to the original prompt (`dograh/workflow.json`, copy in `screener-prompt.txt`). The flow and persona are unchanged. Branch: `fix/screener-call-feedback`.
+
+- **No repeated questions.** New rule 9: once something is answered, even with a "yeah" or "haan", it is settled. A mid-call "Hello?" gets "Yes, I'm here!" and only the last question again, once. Identity is never asked twice.
+- **Shorter opening.** Stage 2 introduces the call, explains it and asks whether now is a good time in one turn. The separate "did you apply?" question is gone (the form already shows it), and so is Stage 3's second explanation and good-time question.
+- **One question and one reaction per turn,** with no reaction word repeated in consecutive turns.
+- **Salary unit asked only when it is missing.**
+- **The resume is spoken about in the agent's own words,** never quoted.
+- **Deep dive:** three items, follows the candidate's own project, accepts "that's the same project", and skips straight to one skill question when the candidate asks to skip.
+- **No "today" promise** in the goodbye.
+- **Voice:** `RUMIK_VOICE=speaker_2` by default. Without a speaker preset, Rumik mulberry builds the voice from the description on every reply, so the pitch drifted from turn to turn (measured spread about 50 Hz against about 10 Hz with a preset).
+- **Dograh brain option:** `npm run voice:setup -- --llm=dograh` gives Deepgram + Dograh AI + Rumik.
+- **Simulator:** `evals/screener-sim.mjs` has `v_real_call_llm`, which replays the phone test.
+
 # Back to the original screening prompt
 
 All screening-prompt work is rolled back: screening v2, the edited v1, and the compact free-tier prompt. `dograh/workflow.json` and `dograh/screener-prompt.txt` are again exactly the original prompt that ran before screening v2, with its original limits (900 s call, 15 s idle, no voicemail hang-up). Branch: `revert/original-prompt`.
