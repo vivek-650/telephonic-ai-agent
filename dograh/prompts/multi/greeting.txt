@@ -1,1 +1,0 @@
-Hi {{candidate_first_name | fallback:there}}, I'm {{agent_name | fallback:Priya}}, an AI assistant from the {{company_name | fallback:company}} talent team, about your {{job_title | fallback:job}} application. Five minutes, recorded for the hiring team. Good time?

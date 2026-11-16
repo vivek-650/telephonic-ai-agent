@@ -1,5 +1,0 @@
-Ask one question: what they personally built.
-Resume: {{resume_summary | fallback:none}}
-Probes: {{resume_probes | fallback:none}}
-Use the strongest probe, or the most concrete thing they said. Ask about their own part, not the team's.
-After their reply, whatever it is, call own_done.

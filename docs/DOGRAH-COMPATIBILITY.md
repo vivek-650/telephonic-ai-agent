@@ -27,7 +27,7 @@ This app talks to [Dograh](https://github.com/dograh-hq/dograh) over its HTTP AP
 
 - **Per-role voices need the voice-engine build.** The per-agent voice setting (`model_voice_override`) is not in any upstream release (checked tags 1.39, 1.43, 1.45 and 1.49). The app probes for it. On standard Dograh the voice dropdown says why it is switched off, no copies of the agent are created, and every role uses the voice you chose in Dograh under Settings > Models. Agent names per role still work.
 - **The voice model key is set in Dograh.** Upstream moved model settings to a connections catalog. On standard Dograh the Settings page shows instructions instead of a form.
-- **The 4,000 token prompt limit** exists only in the voice-engine build, and the screening prompt is now about 700 tokens, well under it.
+- **The 4,000 token prompt limit** exists only in the voice-engine build, so standard Dograh will not reject the 5,500 token screening prompt. If your Dograh has a prompt limit, create the agents anyway and shorten `dograh/screener-prompt.txt`.
 
 ## Voice-engine build
 

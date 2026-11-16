@@ -1,3 +1,12 @@
+# Back to the original screening prompt
+
+All screening-prompt work is rolled back: screening v2, the edited v1, and the compact free-tier prompt. `dograh/workflow.json` and `dograh/screener-prompt.txt` are again exactly the original prompt that ran before screening v2, with its original limits (900 s call, 15 s idle, no voicemail hang-up). Branch: `revert/original-prompt`.
+
+- Removed `dograh/prompts/`, `scripts/build-screener.mjs`, `dograh/workflow-compact.json` and `dograh/workflow.backup.json`, which is now the same as `workflow.json`. Edit the prompt in `workflow.json` and `screener-prompt.txt` (a unit test checks they match), then run `node scripts/apply-screener.mjs`.
+- `voice:setup` no longer has `--prompt`. It warns that this prompt is too big for a real call on the Groq free tier.
+- Kept: the voice stack, the Rumik overlay, spoken-number parsing, the resume brief, negotiation behind `SCREEN_NEGOTIATION` (budgets never reach the browser) and the optional evidence fields, which the original prompt simply does not fill.
+- The sections below describe the rolled-back work and are kept for history.
+
 # Voice stack on the Groq free tier
 
 Groq's free tier allows 8,000 tokens a minute and 1,000 requests a day per model, and cached tokens still count (tested). Every reply resends the whole prompt, so the full screener (~6,000 tokens) fits about one reply a minute. The reference stack's receptionist prompt is about 650 tokens, which is why it runs fine there. Branch: `feat/groq-free-tier`.

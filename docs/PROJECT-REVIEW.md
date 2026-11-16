@@ -47,7 +47,7 @@ Hirevox is a self-hosted AI interview platform.
 | Database | SQLite through Node's built-in `node:sqlite`, WAL mode, 6 versioned migrations |
 | Voice | Dograh (open-source, built on Pipecat), self-hosted in Docker. Browser interviews use WebRTC through a same-origin proxy and TURN relays. |
 | AI | Rule-based scoring (deterministic, audited). An optional LLM router (Groq, Z.ai, Anthropic, xAI, any OpenAI-compatible endpoint) gives second opinions and drafts text, with a rules fallback. |
-| Quality | 24 unit tests, 43 end-to-end tests against a mock voice engine, a 15-case labelled eval suite with CI gates, JSDoc type checks and a typed frontend |
+| Quality | 21 unit tests, 43 end-to-end tests against a mock voice engine, a 15-case labelled eval suite with CI gates, JSDoc type checks and a typed frontend |
 
 ---
 
@@ -364,28 +364,30 @@ The edge `start → end` is labelled "End call", which Dograh exposes to the LLM
 
 ### 6.2 The prompt and the variables it relies on
 
-The prompts live in `dograh/prompts/` (`global.txt`, `interview.txt`, `greeting.txt`, `close.txt`). `scripts/build-screener.mjs` builds `dograh/workflow.json` and the composed `dograh/screener-prompt.txt` from them, and a unit test fails when the built files are out of date. The design, token budgets, tests and rollback steps are in `CHANGES.md` (screening agent v2).
+`dograh/screener-prompt.txt` (kept identical to the prompt inside `workflow.json`, which a unit test enforces) defines the interview:
 
-- **Greeting:** fixed spoken text, so it needs no model call. It names the candidate, says it's an AI assistant from the talent team, gives the role, says five minutes and recorded, and asks if now is a good time.
-- **The interview node** follows a numbered plan, one question per turn, each at most 25 words:
-  - Q1 confirms the form in one sentence;
-  - Q2 asks what they personally built, using the resume probes;
-  - Q3 reconciles any conflict between form, resume and answers, or else asks how it worked;
-  - Q4 asks what broke, or for a rough number;
-  - Q5 is a practical scenario on the first must-have skill;
-  - Q6 is one follow-up or the role's own question.
-- **Early exits:** wrong person, no time (after getting a time window), no recording consent, "never applied", or a candidate who asks to stop and declines one "two quick questions" retention line.
-- **The goodbye node** (`endCall`) says a goodbye that fits the reason and hangs up.
-- **Salary negotiation** is off unless `SCREEN_NEGOTIATION=1`. With it off, no budget figure reaches the prompt. The agent only records the expectation and never states a budget.
-- **Limits:** 480 s per call, 12 s idle, voicemail detection with hang-up.
+- **Stage 1** greets the candidate by first name and confirms the application. **Stage 2** checks it's a good time to talk. In browser mode both are skipped, and the agent never says "calling".
+- **Stage 3** confirms the details from the form.
+- **Stage 4** covers the core questions: relevant experience, a specific example with results, notice period, expected salary, whether they can work from the job location, and interview availability.
+- **Resume probes:** it asks about gaps in the timeline and checks skills the candidate claims.
+- **The role's own extra questions.**
+- **Salary negotiation** (only when switched on for the role):
+  - the agent states the budget in lakhs per year;
+  - it makes one counter-offer, capped at the stretch;
+  - it gives the reason the budget is tight;
+  - it never promises an offer;
+  - it records the outcome (`negotiation_outcome`, `agreed_salary`).
+- **Turn rules:** one question at a time, short sentences, and calling `end_call` after the closing line.
 
-**The contract:** `services/screening.js` `screeningContext()` builds every variable the prompts can use:
-- candidate: id, name, first name, city, plus the experience, notice, salary (also as `form_expected_lpa`) and skills from the form;
+**The contract:** `services/screening.js` `screeningContext()` builds every variable the prompt can use:
+- candidate: id, name, first name, city, plus the experience, notice, salary and skills from the form;
 - role: title, company, location, minimum years, must-have skills, extra questions;
-- resume: `resumeBrief()` gives up to 5 facts, 3 probes and 1 claim to cross-check, capped at 400 characters. The raw text is still sent but no prompt uses it;
-- the date applied, negotiation settings, the agent's name and the interview mode.
+- resume: whether there is one, a summary, the text (capped at 6,000 characters) and the probes;
+- the date applied;
+- negotiation: on or off, budget and stretch both monthly and in LPA, and the notes;
+- the agent's name and the interview mode.
 
-`tests/unit/interview-contract.test.mjs` fails the build if a prompt uses a variable the server never sends, if a prompt goes over its token budget, or if the extraction contract changes. The webhook reads the same variable names as before. New evidence fields (`mismatch_detected`, `mismatch_note`, `ownership_signal`, `depth_signal`, `left_early`, `ai_disclosed`) pass through `answersFromDograh()` and are optional.
+`tests/unit/interview-contract.test.mjs` fails the build if the prompt uses a variable the server never sends.
 
 ### 6.3 Per-role agents and voices
 
@@ -1076,7 +1078,7 @@ Suggested order for reading the code:
 1. `docs/ARCHITECTURE.md`, then `server.js`: how everything is wired together and the request pipeline.
 2. `services/interviews.js` `handleWebhook`: idempotency, the transaction, re-reading the run from Dograh.
 3. `scoring.js` `scoreCandidate` and `evidenceOf`, with `evals/cases.json` and `npm run eval`.
-4. `services/screening.js` and `dograh/prompts/` (built by `scripts/build-screener.mjs`), with `tests/unit/interview-contract.test.mjs`.
+4. `services/screening.js` and `dograh/screener-prompt.txt`, with `tests/unit/interview-contract.test.mjs`.
 5. `services/dograh.js` and `lib/resilience.js`: the retry policy (reads only) and the breaker.
 6. `web/lib/dograh-session.ts` and `web/components/interview/call-room.tsx`: the browser interview.
 7. `web/app/dashboard/candidates/[id]/page.tsx` and `web/components/candidate/*`: the main recruiter page.

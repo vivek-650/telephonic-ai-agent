@@ -30,7 +30,7 @@ For each role in **Roles and jobs**:
 
 ## 4. Tune the screening agent
 
-The agent's script is in `dograh/prompts/` (plain English with placeholders such as `{{job_title}}` and `{{resume_summary}}`). After editing, run `node scripts/build-screener.mjs` to rebuild `dograh/workflow.json`, then `node scripts/apply-screener.mjs` to update the live agent. Common edits:
+The agent's script is `dograh/screener-prompt.txt` (also inside `dograh/workflow.json`). It is plain English with placeholders such as `{{job_title}}` and `{{resume_text}}`. Common edits:
 
 - Greeting and tone.
 - How many resume questions it asks (default 3 to 4).

@@ -1,5 +1,5 @@
 // The interview contract with the voice agent, as pure functions:
-//  - screeningContext(): every variable the agent prompts can use (dograh/prompts/, composed into dograh/screener-prompt.txt)
+//  - screeningContext(): every variable the agent prompt can use (dograh/screener-prompt.txt, also inside dograh/workflow.json)
 //  - parseWebhook(): normalise Dograh's result payload
 //  - answersFromDograh() / transcriptFromDograh() / transcriptFromRun(): map it onto our answer keys
 import { QUESTIONS, parseAnswer, resumeProbes } from '../scoring.js';
@@ -64,7 +64,7 @@ export function resumeBrief(c) {
 
 /**
  * Everything the AI interviewer knows about this candidate and role. Every `{{variable}}` in
- * dograh/prompts/ must be a key here (enforced by tests/unit/interview-contract.test.mjs).
+ * dograh/workflow.json must be a key here (enforced by tests/unit/interview-contract.test.mjs).
  */
 export function screeningContext(c, job) {
   const { resume_summary, resume_probes, resume_claim } = resumeBrief(c);
