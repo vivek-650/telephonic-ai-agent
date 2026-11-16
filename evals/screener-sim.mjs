@@ -13,6 +13,8 @@ if (!WID) { console.error('usage: screener-sim.mjs <workflow id> [scenario ...]'
 const RUNS = Number(process.argv.find(a => a.startsWith('--runs='))?.slice(7)) || 1;
 // Dograh workflow that plays LLM candidates (evals/candidate-sim-workflow.json); scenarios with `llm` need it.
 const SIM = process.argv.find(a => a.startsWith('--sim='))?.slice(6);
+// --pace=<seconds>: wait between candidate replies, as on a real call (Groq's free tier allows 8,000 tokens a minute).
+const PACE = Number(process.argv.find(a => a.startsWith('--pace='))?.slice(7)) || 0;
 const only = new Set(process.argv.slice(3).filter(a => !a.startsWith('--')));
 
 const RESUME = `Riya Sharma
@@ -132,6 +134,7 @@ async function run(id, sc) {
   absorb(s);
   const agentTurns = () => transcript.filter(t => t.role === 'agent').length;
   const send = async line => {
+    if (PACE) await new Promise(r => setTimeout(r, PACE * 1000));
     s = await dograh('POST', `/api/v1/workflow/${WID}/text-chat/sessions/${s.workflow_run_id}/messages`, { text: line, expected_revision: s.revision });
     absorb(s);
   };

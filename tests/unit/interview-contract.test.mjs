@@ -127,3 +127,18 @@ test('spoken Hindi and Hinglish numbers are normalised to English values', () =>
   assert.equal(answersFromDograh({ gathered_context: { expected_salary: '50 hazar per month' } }).expected_salary, 50000, 'hazar is thousand, not 50 rupees');
   assert.equal(answersFromDograh({ gathered_context: { years_experience: 'I do have 3 years' } }).years_experience, 3, 'English "do" is not the Hindi 2');
 });
+
+test('compact prompt (Groq free tier): same contract, built from dograh/prompts/compact, <= 1,500 tokens rendered', () => {
+  const ctx = screeningContext({ ...CAND, resume_text: RESUME }, JOB);
+  const [global, interview] = ['global', 'interview'].map(n => file(`prompts/compact/${n}.txt`).trim());
+  const vars = [...`${global}\n${interview}`.matchAll(/\{\{\s*(\w+)/g)].map(m => m[1]);
+  assert.deepEqual(vars.filter(v => !(v in ctx)), [], 'compact prompt uses variables the server never sends');
+  const wf = JSON.parse(file('workflow-compact.json'));
+  const byType = t => wf.nodes.find(n => n.type === t)?.data;
+  assert.equal(byType('globalNode').prompt, global);
+  assert.equal(byType('startCall').prompt, interview);
+  assert.equal(byType('endCall').prompt, PROMPTS[2].trim());
+  assert.deepEqual(byType('startCall').extraction_variables.map(v => v.name), JSON.parse(file('workflow.json')).nodes.find(n => n.type === 'startCall').data.extraction_variables.map(v => v.name), 'same extraction contract');
+  const run = tokens(render(global, ctx)) + tokens(render(interview, ctx));
+  assert.ok(run <= 1500, `compact rendered ${run}: a reply must fit well inside 8,000 tokens a minute`);
+});

@@ -1,3 +1,14 @@
+# Voice stack on the Groq free tier
+
+Groq's free tier allows 8,000 tokens a minute and 1,000 requests a day per model, and cached tokens still count (tested). Every reply resends the whole prompt, so the full screener (~6,000 tokens) fits about one reply a minute. The reference stack's receptionist prompt is about 650 tokens, which is why it runs fine there. Branch: `feat/groq-free-tier`.
+
+- **Compact prompt.** `dograh/prompts/compact/` is the same staged flow in about 1,370 tokens. `node scripts/build-screener.mjs --compact` builds `dograh/workflow-compact.json`, which has the same extraction contract (unit-tested). Load it with `npm run voice:setup -- --workflow=<id> --prompt=compact`, which keeps the trigger and webhook. The script warns when a prompt is too big for the free tier.
+- **Fallback model.** On a rate-limit error Dograh retries the reply on `VOICE_LLM_FALLBACK_MODEL` (default `openai/gpt-oss-20b`), which has its own allowance.
+- **Less reasoning.** The overlay sends `reasoning_effort: low` for Groq gpt-oss models, because reasoning tokens count towards the limit too.
+- **Measured:** 8 simulated calls with a 10 s gap per reply, as on a real call: 0 rate-limit errors, about 1,500 to 1,750 prompt tokens per reply.
+- **Remaining limits:** about one call at a time, and roughly 60 calls a day per model. The model sometimes asks two questions in one turn, and the full prompt on Dograh's own model still sounds better.
+- `evals/screener-sim.mjs --pace=<seconds>` waits between replies like a real call.
+
 # Screening prompt back to the staged v1 flow
 
 The short v2 prompt was not conversational enough. The screener runs the long, staged v1 prompt again (stages 1 to 7, high-energy persona), split into `dograh/prompts/global.txt` (who you are, facts, turn rules, voice, never-do list) and `interview.txt` (web mode, call flow, situations, what to capture). Branch: `fix/screener-prompt-v1-style`.
@@ -17,7 +28,7 @@ Calls can run on our own provider keys instead of Dograh's bundled models (about
 - **Defaults.** Deepgram `nova-3-general` with `multi` (English and Hindi code-switching), Groq `openai/gpt-oss-120b` (Llama 3.3 70B is no longer offered on Groq), and Rumik `mulberry` with a voice description.
 - **Visible in Hirevox.** `GET /api/app-settings/dograh-status` reports `voice_stack` (which configuration the screener uses), and the settings page shows it. Role copies of the screener inherit the stack.
 - **Text AI fix.** Groq retired `llama-3.1-8b-instant`, so every Groq text call was failing over to the next provider. The default is now `openai/gpt-oss-20b` with low reasoning effort.
-- **Groq free tier is not enough for calls.** It allows 8,000 tokens per minute on gpt-oss-120b, and one call uses about 7,000 to 9,000. Use the Dev tier (pay as you go) before real calls.
+- **Groq free tier.** See "Voice stack on the Groq free tier" above: use the compact prompt.
 
 # Screening agent v2
 

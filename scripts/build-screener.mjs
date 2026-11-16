@@ -11,7 +11,10 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MULTI = process.argv.includes('--multi');
-const P = name => readFileSync(path.join(ROOT, 'dograh', 'prompts', `${name}.txt`), 'utf8').trim();
+// --compact: the same flow in about 1,000 tokens (dograh/prompts/compact/) for our own Groq key, whose free tier
+// allows 8,000 tokens per minute per model. Writes dograh/workflow-compact.json; the close prompt is shared.
+const COMPACT = process.argv.includes('--compact');
+const P = name => readFileSync(path.join(ROOT, 'dograh', 'prompts', `${COMPACT && name !== 'close' ? 'compact/' : ''}${name}.txt`), 'utf8').trim();
 const v = (name, type, prompt) => ({ name, type, prompt });
 
 const EXTRACT = 'Extract only what the candidate actually said. Use an empty value or false when it was not discussed; never guess. If the interview never started (wrong person, no time), leave every evidence field empty or false.';
@@ -108,8 +111,8 @@ if (!MULTI) {
   ];
 }
 
-writeFileSync(path.join(ROOT, 'dograh', 'workflow.json'), JSON.stringify({ nodes, edges }, null, 2) + '\n');
+writeFileSync(path.join(ROOT, 'dograh', COMPACT ? 'workflow-compact.json' : 'workflow.json'), JSON.stringify({ nodes, edges }, null, 2) + '\n');
 // The full system prompt the interview runs with (Dograh joins global + node with a blank line). Read by the
 // engine room page and the contract test; generated, do not edit by hand.
-if (!MULTI) writeFileSync(path.join(ROOT, 'dograh', 'screener-prompt.txt'), `${P('global')}\n\n${P('interview')}\n`);
-console.log(`dograh/workflow.json (${MULTI ? 'multi-node' : 'single-node'}): ${nodes.length} nodes, ${edges.length} edges`);
+if (!MULTI && !COMPACT) writeFileSync(path.join(ROOT, 'dograh', 'screener-prompt.txt'), `${P('global')}\n\n${P('interview')}\n`);
+console.log(`dograh/${COMPACT ? 'workflow-compact' : 'workflow'}.json (${MULTI ? 'multi-node' : COMPACT ? 'compact single-node' : 'single-node'}): ${nodes.length} nodes, ${edges.length} edges`);
