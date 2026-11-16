@@ -125,14 +125,16 @@ export function createDograhClient({ root, db, settings, trace, log }) {
       const base = await api('GET', `/api/v1/workflow/fetch/${K.wid()}`);
       const def = structuredClone(base.workflow_definition);
       for (const n of def.nodes) if (n.type === 'trigger' && n.data) delete n.data.trigger_path;
-      const hash = createHash('sha256').update(JSON.stringify(def) + '|' + voice).digest('hex').slice(0, 16);
+      const hash = createHash('sha256').update(JSON.stringify(def) + '|' + voice + (base.workflow_configurations?.model_configuration_override ? '|' + JSON.stringify(base.workflow_configurations.model_configuration_override) : '')).digest('hex').slice(0, 16);
       const row = db.prepare('SELECT agent_sync, agent_uuid, agent_wid, rej_agent_uuid, rej_wid FROM jobs WHERE id=?').get(job.id) || {};
       const sync = json(row.agent_sync, {});
       let uuid = row[K.uuidCol], wid = row[K.widCol];
       if (uuid && wid && sync[kind] === hash) return uuid;
       const name = `${job.title} (${voice}) ${K.label}`.slice(0, 80);
       if (!wid) wid = (await api('POST', '/api/v1/workflow/create/definition', { name, workflow_definition: def })).id;
-      const published = await publish(wid, name, def, { ...K.cfg, model_voice_override: { voice } });
+      // A role copy runs on the same speech, brain and voice stack as the default agent.
+      const stack = base.workflow_configurations?.model_configuration_override;
+      const published = await publish(wid, name, def, { ...K.cfg, ...(stack ? { model_configuration_override: stack } : {}), model_voice_override: { voice } });
       uuid = uuid || published;
       sync[kind] = hash;
       db.prepare(`UPDATE jobs SET ${K.uuidCol}=?, ${K.widCol}=?, agent_sync=? WHERE id=?`).run(uuid, wid, JSON.stringify(sync), job.id);
@@ -160,5 +162,29 @@ export function createDograhClient({ root, db, settings, trace, log }) {
     catch (e) { trace('dograh_run_fetch_failed', { run_id: runId, error: String(e.message || e).slice(0, 120) }); return null; }
   }
 
-  return { api, createAgents, caps, reachable, roleAgent, syncRoleAgents, call, fetchRun, breaker };
+  /**
+   * Which speech-to-text, brain and voice the screener runs on: its own model configuration
+   * (scripts/setup-voice-stack.mjs --workflow) or the organisation default. Null when Dograh has no catalog.
+   */
+  async function voiceStack() {
+    try {
+      const MC = '/api/v1/model-connections';
+      const [wf, configs, conns, def] = await Promise.all([
+        DOGRAH.workflowId ? api('GET', `/api/v1/workflow/fetch/${DOGRAH.workflowId}`) : null,
+        api('GET', `${MC}/model-configurations`), api('GET', `${MC}/provider-connections`), api('GET', `${MC}/default`),
+      ]);
+      const override = wf?.workflow_configurations?.model_configuration_override?.model_configuration_uuid;
+      const cfg = configs.find(c => c.uuid === (override || def?.model_configuration_uuid));
+      if (!cfg) return null;
+      const part = s => {
+        if (!s) return null;
+        const provider = conns.find(c => c.uuid === s.provider_connection_uuid)?.provider || 'unknown';
+        return { provider, model: s.settings?.model || (provider === 'dograh' ? 'default' : null) };
+      };
+      const { stt, llm, tts } = cfg.configuration;
+      return { name: cfg.name, source: override ? 'screener' : 'organisation default', stt: part(stt), llm: part(llm), tts: part(tts) };
+    } catch { return null; }
+  }
+
+  return { api, createAgents, caps, reachable, roleAgent, syncRoleAgents, call, fetchRun, breaker, voiceStack };
 }

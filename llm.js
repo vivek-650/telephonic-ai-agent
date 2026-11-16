@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 const env = (k, d = '') => process.env[k] || d;
 
 const PROVIDERS = {
-  groq: { kind: 'openai', keyEnv: 'GROQ_API_KEY', url: () => 'https://api.groq.com/openai/v1/chat/completions', key: () => env('GROQ_API_KEY'), model: () => env('GROQ_MODEL', 'llama-3.1-8b-instant') },
+  groq: { kind: 'openai', keyEnv: 'GROQ_API_KEY', url: () => 'https://api.groq.com/openai/v1/chat/completions', key: () => env('GROQ_API_KEY'), model: () => env('GROQ_MODEL', 'openai/gpt-oss-20b'), get extra() { return /gpt-oss/.test(this.model()) ? { reasoning_effort: 'low' } : undefined; } },
   zai: { kind: 'openai', keyEnv: 'ZAI_API_KEY', url: () => env('ZAI_BASE_URL', 'https://api.z.ai/api/paas/v4/chat/completions'), key: () => env('ZAI_API_KEY'), model: () => env('ZAI_MODEL', 'glm-4.5-flash'), extra: { thinking: { type: 'disabled' } } },
   pollinations: { kind: 'openai', keyEnv: 'POLLINATIONS_API_KEY (optional)', keyless: true, url: () => env('POLLINATIONS_BASE_URL', 'https://text.pollinations.ai/openai'), key: () => env('POLLINATIONS_API_KEY'), model: () => env('POLLINATIONS_MODEL', 'mistral') },
   custom: { kind: 'openai', keyEnv: 'LLM_CUSTOM_URL + LLM_CUSTOM_MODEL (+ LLM_CUSTOM_KEY)', keyless: true, url: () => env('LLM_CUSTOM_URL'), key: () => env('LLM_CUSTOM_KEY'), model: () => env('LLM_CUSTOM_MODEL', 'default') },
