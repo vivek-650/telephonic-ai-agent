@@ -1,1 +1,0 @@
-Say goodbye now. Thank {{candidate_first_name | fallback:them}} by first name, say a recruiter will review this and be in touch, then bye. Max 25 words. No recap, no timing promise, no question.

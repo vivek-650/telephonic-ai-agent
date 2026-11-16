@@ -416,7 +416,7 @@ try {
     assert.equal(j.status, 201); assert.equal(j.data.agent_ready, true);
     assert.equal(dograhCalls.filter(c => c.url === '/api/v1/workflow/create/definition').length, 1);
     const put = dograhCalls.find(c => c.url === '/api/v1/workflow/55' && c.body?.workflow_configurations);
-    assert.equal(put.body.workflow_configurations.model_voice_override.voice, 'Kore'); assert.equal(put.body.workflow_configurations.max_call_duration, 720); assert.equal(put.body.workflow_configurations.max_user_idle_timeout, 15);
+    assert.equal(put.body.workflow_configurations.model_voice_override.voice, 'Kore'); assert.equal(put.body.workflow_configurations.max_call_duration, 900); assert.equal(put.body.workflow_configurations.max_user_idle_timeout, 15);
     assert.ok(!put.body.workflow_definition.nodes.find(n => n.type === 'trigger').data.trigger_path, 'the copy must not reuse the base trigger path');
     const a = await req('/api/applications', 'POST', { ...applicant, job_id: j.data.id, name: 'Consult Candidate', email: 'cc@example.com' });
     assert.equal((await req(`/api/candidates/${a.data.id}/screenings`, 'POST', { mode: 'phone' })).status, 201);

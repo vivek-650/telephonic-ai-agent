@@ -6,16 +6,12 @@
 //   node scripts/setup-voice-stack.mjs --workflow=7         make workflow 7 run on it (a per-workflow override)
 //   node scripts/setup-voice-stack.mjs --workflow=7 --off   put workflow 7 back on the organisation default
 //   node scripts/setup-voice-stack.mjs --default            make it the organisation default (every agent)
-//   add --prompt=compact (or --prompt=full) to also load dograh/workflow-compact.json (or workflow.json) into that
-//   workflow, keeping its trigger and webhook. Use compact on the Groq free tier, see below.
 //
 // Groq free tier: 8,000 tokens per minute and 1,000 requests a day, per model, and cached tokens still count. Every
-// reply resends the whole prompt, so the full screener (~6,000 tokens) fits about one reply a minute, while the
-// compact one (~1,300) fits a normal conversation. On a rate-limit error Dograh retries the reply on a second Groq
-// model (VOICE_LLM_FALLBACK_MODEL), which has its own allowance.
+// reply resends the whole prompt, so the screener prompt (~6,000 tokens) fits about one reply a minute there. On a
+// rate-limit error Dograh retries the reply on a second Groq model (VOICE_LLM_FALLBACK_MODEL).
 //
 // Rumik is not a stock Dograh provider: Dograh must run the overlay image from dograh/overlay/rumik.
-import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadEnvFile, DOGRAH } from '../lib/config.js';
@@ -86,25 +82,15 @@ const wid = arg('workflow');
 if (wid && wid !== true) {
   const live = await call('GET', `/api/v1/workflow/fetch/${wid}`);
   const wc = { ...(live.workflow_configurations || {}) };
-  let def = live.workflow_definition;
-  const prompt = arg('prompt');
-  if (prompt === 'compact' || prompt === 'full') {
-    def = JSON.parse(readFileSync(path.join(ROOT, 'dograh', prompt === 'compact' ? 'workflow-compact.json' : 'workflow.json'), 'utf8'));
-    const liveOf = type => live.workflow_definition.nodes.find(n => n.type === type)?.data;
-    for (const type of ['trigger', 'webhook']) if (!liveOf(type)) { const gone = new Set(def.nodes.filter(n => n.type === type).map(n => n.id)); def.nodes = def.nodes.filter(n => !gone.has(n.id)); def.edges = def.edges.filter(e => !gone.has(e.source) && !gone.has(e.target)); }
-    for (const n of def.nodes) {
-      if (n.type === 'trigger') n.data = { ...n.data, trigger_path: liveOf('trigger').trigger_path };
-      if (n.type === 'webhook') n.data.endpoint_url = liveOf('webhook').endpoint_url;
-    }
-  } else if (prompt) throw new Error('--prompt must be compact or full');
+  const def = live.workflow_definition;
   const size = Math.ceil(def.nodes.filter(n => n.type === 'globalNode' || n.type === 'startCall').reduce((t, n) => t + String(n.data?.prompt || '').length, 0) / 4);
-  if (!arg('off') && size > 2500) console.warn(`Warning: this agent's prompt is ~${size} tokens. On the Groq free tier (8,000 tokens a minute) that leaves room for about ${Math.max(1, Math.floor(8000 / size))} reply a minute. Add --prompt=compact.`);
+  if (!arg('off') && size > 2500) console.warn(`Warning: this agent's prompt is ~${size} tokens. On the Groq free tier (8,000 tokens a minute) that leaves room for about ${Math.max(1, Math.floor(8000 / size))} reply a minute. Too big for a real call on the free tier; keep this agent on Dograh's models.`);
   if (arg('off')) wc.model_configuration_override = {}; // omitting the key keeps the stored override; {} means inherit the default
   else wc.model_configuration_override = { model_configuration_uuid: cfg.uuid };
   await call('POST', `/api/v1/workflow/${wid}/create-draft`).catch(() => {});
   await call('PUT', `/api/v1/workflow/${wid}`, { name: live.name, workflow_definition: def, workflow_configurations: wc });
   await call('POST', `/api/v1/workflow/${wid}/publish`).catch(e => { if (!/No draft to publish/i.test(String(e.message))) throw e; });
-  console.log(`Workflow ${wid} ("${live.name}") now runs on ${arg('off') ? 'the organisation default' : CONFIG_NAME}${prompt ? ` with the ${prompt} prompt (~${size} tokens)` : ''}.`);
+  console.log(`Workflow ${wid} ("${live.name}") now runs on ${arg('off') ? 'the organisation default' : CONFIG_NAME}.`);
 }
 if (arg('default')) {
   await call('PUT', `${MC}/default`, { model_configuration_uuid: cfg.uuid });

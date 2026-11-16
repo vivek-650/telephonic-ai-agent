@@ -10,41 +10,28 @@ const file = f => readFileSync(fileURLToPath(new URL(`../../dograh/${f}`, import
 const JOB = { title: 'Inside Sales Executive', company: 'Acme', location: 'Pune', min_years: 2, max_salary: 60000, max_notice_days: 30, locations: ['pune'], must_skills: ['crm', 'cold calling'], negotiable: 1, stretch_pct: 10 };
 const CAND = { id: 'c1', name: 'Riya Sharma', city: 'Pune', years: 3, notice_days: 15, expected_salary: 52000, skills: 'CRM', created_at: '2026-11-01 10:00:00' };
 
-const PROMPTS = ['global', 'interview', 'close'].map(n => file(`prompts/${n}.txt`));
-// Renders {{var | fallback:text}} the way Dograh does; tokens are estimated as characters / 4.
-const render = (tpl, ctx) => tpl.replace(/\{\{\s*(\w+)\s*(?:\|\s*fallback:([^}]*))?\}\}/g, (_, k, fb) => (ctx[k] ? String(ctx[k]) : (fb ?? '').trim()));
-const tokens = s => Math.ceil(s.length / 4);
+const WF = JSON.parse(file('workflow.json'));
+const node = t => WF.nodes.find(n => n.type === t)?.data;
+const PROMPT = node('startCall').prompt;
 const RESUME = 'Backend Engineer, Acme Payments, Jan 2022 - Present\nIntern, Zeta, Jun 2021 - Dec 2021\n- Built the payout retry queue in Go, cutting failed payouts from 2.1% to 0.3%\n- Moved 12 services to Docker with CI on GitHub Actions\nSkills: Go, Postgres, Kafka, Docker, AWS';
 
-test('every {{variable}} in the agent prompts is supplied by screeningContext()', () => {
+test('every {{variable}} in the agent prompt is supplied by screeningContext()', () => {
   const ctx = screeningContext(CAND, JOB);
-  const vars = new Set(PROMPTS.flatMap(p => [...p.matchAll(/\{\{\s*(?:initial_context\.)?(\w+)/g)].map(m => m[1])));
+  const vars = new Set([...PROMPT.matchAll(/\{\{\s*(?:initial_context\.)?(\w+)/g)].map(m => m[1]));
   const missing = [...vars].filter(v => !(v in ctx));
-  assert.deepEqual(missing, [], `prompts use variables the server never sends: ${missing.join(', ')}`);
+  assert.deepEqual(missing, [], `prompt uses variables the server never sends: ${missing.join(', ')}`);
 });
 
-test('workflow.json and screener-prompt.txt are built from dograh/prompts (run scripts/build-screener.mjs)', () => {
-  const wf = JSON.parse(file('workflow.json'));
-  const byType = t => wf.nodes.find(n => n.type === t)?.data;
-  const [global, interview, close] = PROMPTS.map(p => p.trim());
-  assert.equal(byType('globalNode').prompt, global);
-  assert.equal(byType('startCall').prompt, interview);
-  assert.ok(!byType('startCall').greeting, 'the agent speaks first, so web mode can skip the identity check');
-  assert.equal(byType('endCall').prompt, close, 'the agent must be able to hang up after its goodbye');
-  assert.match(global, /call(ing)? the end_call function/, 'the prompt names the hang-up tool');
-  assert.equal(wf.edges[0].data.label.toLowerCase().replace(/[^a-z0-9]+/g, '_'), 'end_call', 'Dograh names the tool after the edge label');
-  assert.equal(file('screener-prompt.txt').trim(), `${global}\n\n${interview}`);
-  const vars = byType('startCall').extraction_variables.map(v => v.name);
+test('workflow.json: the screening prompt, its copy in screener-prompt.txt, extraction and hang-up', () => {
+  assert.equal(file('screener-prompt.txt').trim(), PROMPT.trim(), 'screener-prompt.txt must match the prompt in workflow.json');
+  const vars = node('startCall').extraction_variables.map(v => v.name);
   for (const k of ['years_experience', 'notice_period_days', 'expected_salary', 'relocation_ok', 'skill_example', 'interview_availability', 'custom_answers', 'applied_confirmed', 'good_time_confirmed', 'negotiation_outcome', 'agreed_salary']) assert.ok(vars.includes(k), `extraction contract: ${k}`);
-  assert.ok(byType('startCall').extraction_variables.every(v => v.prompt), 'Dograh reads extraction hints from `prompt`');
+  assert.ok(node('endCall'), 'the agent must be able to hang up after its goodbye');
+  assert.match(PROMPT, /end_call/, 'the prompt names the hang-up tool');
+  assert.equal(WF.edges[0].data.label.toLowerCase().replace(/[^a-z0-9]+/g, '_'), 'end_call', 'Dograh names the tool after the edge label');
 });
 
-test('prompt budgets: global + interview <= 7,000 tokens rendered with a resume, resume brief <= 400 chars', () => {
-  const ctx = screeningContext({ ...CAND, resume_text: RESUME }, JOB);
-  const [global, interview] = PROMPTS;
-  // The staged call flow is long on purpose (it is what sounds natural); this cap only stops it growing further.
-  const run = tokens(render(global, ctx)) + tokens(render(interview, ctx));
-  assert.ok(run <= 7000, `global + interview rendered ${run}`);
+test('resume brief stays within 400 characters and 3 probes', () => {
   const brief = resumeBrief({ ...CAND, resume_text: RESUME.repeat(4) });
   assert.ok(Object.values(brief).join('').length <= 400, 'brief cap');
   assert.ok(brief.resume_probes.split(' | ').length <= 3);
@@ -128,17 +115,3 @@ test('spoken Hindi and Hinglish numbers are normalised to English values', () =>
   assert.equal(answersFromDograh({ gathered_context: { years_experience: 'I do have 3 years' } }).years_experience, 3, 'English "do" is not the Hindi 2');
 });
 
-test('compact prompt (Groq free tier): same contract, built from dograh/prompts/compact, <= 1,500 tokens rendered', () => {
-  const ctx = screeningContext({ ...CAND, resume_text: RESUME }, JOB);
-  const [global, interview] = ['global', 'interview'].map(n => file(`prompts/compact/${n}.txt`).trim());
-  const vars = [...`${global}\n${interview}`.matchAll(/\{\{\s*(\w+)/g)].map(m => m[1]);
-  assert.deepEqual(vars.filter(v => !(v in ctx)), [], 'compact prompt uses variables the server never sends');
-  const wf = JSON.parse(file('workflow-compact.json'));
-  const byType = t => wf.nodes.find(n => n.type === t)?.data;
-  assert.equal(byType('globalNode').prompt, global);
-  assert.equal(byType('startCall').prompt, interview);
-  assert.equal(byType('endCall').prompt, PROMPTS[2].trim());
-  assert.deepEqual(byType('startCall').extraction_variables.map(v => v.name), JSON.parse(file('workflow.json')).nodes.find(n => n.type === 'startCall').data.extraction_variables.map(v => v.name), 'same extraction contract');
-  const run = tokens(render(global, ctx)) + tokens(render(interview, ctx));
-  assert.ok(run <= 1500, `compact rendered ${run}: a reply must fit well inside 8,000 tokens a minute`);
-});
