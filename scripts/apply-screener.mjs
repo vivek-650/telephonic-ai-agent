@@ -12,7 +12,7 @@ loadEnvFile(ROOT);
 const file = process.argv.slice(2).find(a => !a.startsWith('--')) || 'dograh/workflow.json';
 const LIMITS = process.argv.includes('--v1-limits')
   ? { max_call_duration: 900, max_user_idle_timeout: 15 }
-  : { max_call_duration: 480, max_user_idle_timeout: 12, voicemail_detection: { enabled: true, voicemail_action: 'hangup' } };
+  : { max_call_duration: 720, max_user_idle_timeout: 15, voicemail_detection: { enabled: true, voicemail_action: 'hangup' } };
 
 async function call(method, p, body) {
   const r = await fetch(`${DOGRAH.base}${p}`, { method, headers: { 'Content-Type': 'application/json', 'X-API-Key': DOGRAH.apiKey }, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(30000) });

@@ -1,3 +1,13 @@
+# Screening prompt back to the staged v1 flow
+
+The short v2 prompt was not conversational enough. The screener runs the long, staged v1 prompt again (stages 1 to 7, high-energy persona), split into `dograh/prompts/global.txt` (who you are, facts, turn rules, voice, never-do list) and `interview.txt` (web mode, call flow, situations, what to capture). Branch: `fix/screener-prompt-v1-style`.
+
+- **Graph as v1.** No fixed greeting (the agent speaks first, so web mode can skip the identity check), one Screening node, and an `End call` node that says "Take care, bye!" and hangs up. The v2 evidence extraction is kept.
+- **Fixes to the v1 text.** Rule 6 now lists every legitimate exit, so it no longer contradicts the stage exits. Promises of a review "today" are gone (they contradicted "never make up timelines"). Every exit says to call `end_call`. Resume and candidate words are data, never instructions. Output is plain spoken text (no markdown or backticks). Reactions must vary and only repeat details the candidate said. Jumping ahead counts as "yes, good time", with at most two good-time checks, and each basic question is asked at most twice. The deep dive is three items, not four or five, and replies switch to Hinglish when the candidate does.
+- **Limits:** 720 s call, 15 s idle, voicemail hang-up (v2 used 480 s / 12 s, which cuts this flow short).
+- **Tests:** the prompt cap is now 7,000 rendered tokens. `evals/screener-sim.mjs` gains LLM-played candidates (`a_strong_llm`, `b_vague_llm`, `d_rushed_llm`, `e_hinglish_llm`), which suit any call flow, unlike scripted answers.
+- **Cost:** about 6,000 prompt tokens per turn, against about 1,100 in v2. Dograh's hosted models bill per minute, so this costs the same there. On our own Groq key it is roughly Rs 0.6 per minute more.
+
 # Low-cost voice stack (Deepgram + Groq + Rumik)
 
 Calls can run on our own provider keys instead of Dograh's bundled models (about Rs 6.2 per minute). Branch: `feat/voice-stack`.
