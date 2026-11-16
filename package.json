@@ -16,7 +16,8 @@
     "typecheck": "npx -y -p typescript@5.6.3 -p @types/node@22.10.2 tsc -p tsconfig.json",
     "doctor": "node scripts/doctor.mjs",
     "seed": "node --experimental-sqlite --no-warnings scripts/seed-demo.mjs",
-    "setup:dograh": "node scripts/setup-dograh.mjs"
+    "setup:dograh": "node scripts/setup-dograh.mjs",
+    "voice:setup": "node scripts/setup-voice-stack.mjs"
   },
   "description": "AI interview platform: candidates apply, an AI recruiter interviews them by voice, an explainable rubric scores them, recruiters decide. Next.js + Node.",
   "license": "MIT",

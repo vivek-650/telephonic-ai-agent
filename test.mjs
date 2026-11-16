@@ -91,6 +91,9 @@ const mock = http.createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/api/v1/organizations/telephony-configs') return jsonOut({ id: 7, name: 'Twilio', provider: 'twilio' });
   if (req.method === 'POST' && req.url === '/api/v1/organizations/telephony-configs/7/phone-numbers') return jsonOut({ id: 1 });
   if (req.method === 'GET' && req.url === '/api/v1/organizations/telephony-configs') return jsonOut({ configurations: [{ id: 7, name: 'Twilio', provider: 'twilio', phone_number_count: 1, is_default_outbound: true }] });
+  if (req.url === '/api/v1/model-connections/provider-connections') return jsonOut([{ uuid: 'c-dg', provider: 'deepgram' }, { uuid: 'c-gq', provider: 'groq' }, { uuid: 'c-rk', provider: 'rumik' }]);
+  if (req.url === '/api/v1/model-connections/model-configurations') return jsonOut([{ uuid: 'mc-1', name: 'Low cost', configuration: { stt: { provider_connection_uuid: 'c-dg', settings: { model: 'nova-3-general' } }, llm: { provider_connection_uuid: 'c-gq', settings: { model: 'openai/gpt-oss-120b' } }, tts: { provider_connection_uuid: 'c-rk', settings: { model: 'mulberry' } } } }]);
+  if (req.url === '/api/v1/model-connections/default') return jsonOut({ model_configuration_uuid: 'mc-1' });
   if (req.url === '/api/v1/user/configurations/user') return jsonOut({ realtime: { provider: 'google_realtime', voice: 'Zephyr', api_key: '****abcd' }, is_realtime: true });
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ status: 'initiated', workflow_run_id: 9001, workflow_run_name: 'WR-TEST' }));
@@ -443,7 +446,8 @@ try {
       assert.ok(last.url.endsWith('/agent-uuid-1')); assert.equal(last.body.initial_context.agent_name, 'Riya', 'the name still applies');
       const v = (await req('/api/voices')).data; assert.equal(v.supported, false); assert.match(v.note, /one voice/);
       assert.equal((await req('/api/app-settings/voice-model', 'POST', { provider: 'google_realtime', api_key: 'k' })).status, 409);
-      assert.equal((await req('/api/app-settings/dograh-status')).data.build, 'standard');
+      const dsr = await req('/api/app-settings/dograh-status'), ds = dsr.data; assert.equal(ds.build, 'standard', JSON.stringify(dsr));
+      assert.deepEqual(ds.voice_stack, { name: 'Low cost', source: 'organisation default', stt: { provider: 'deepgram', model: 'nova-3-general' }, llm: { provider: 'groq', model: 'openai/gpt-oss-120b' }, tts: { provider: 'rumik', model: 'mulberry' } }, 'the screener voice stack is reported');
     } finally { catalogOff = false; }
   });
   await t('settings page: secrets encrypted and masked, brand applies live, blank keeps, clear restores, locked when public without a password', async () => {

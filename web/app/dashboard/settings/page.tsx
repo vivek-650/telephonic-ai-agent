@@ -33,8 +33,14 @@ function Rubric() {
   );
 }
 
+type StackPart = { provider: string; model: string | null } | null;
+type DograhStatus = { connected: boolean; voice_stack?: { name: string; source: string; stt: StackPart; llm: StackPart; tts: StackPart } | null };
+const stackLabel = (p: StackPart) => (p ? `${p.provider}${p.model && p.provider !== 'dograh' ? ` ${p.model.replace(/^openai\//, '')}` : ''}` : 'none');
+
 function VoiceTools({ s }: { s: AppSettings }) {
   const [busy, setBusy] = useState<string | null>(null);
+  const { data: st } = useApi<DograhStatus>(s.caps.reachable ? '/api/app-settings/dograh-status' : null);
+  const vs = st?.voice_stack;
   const act = async (name: string, fn: () => Promise<any>) => {
     setBusy(name);
     try { const r = await fn(); r?.ok === false ? toast.error(r.message) : toast.success(r?.message || 'Done'); } catch (e: any) { toast.error(e.message); }
@@ -44,6 +50,7 @@ function VoiceTools({ s }: { s: AppSettings }) {
     <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface-2/40 p-3">
       <Badge tone={s.caps.reachable ? 'success' : 'danger'} dot>{s.caps.reachable ? `Dograh ${s.caps.version || ''} reachable` : 'Dograh unreachable'}</Badge>
       <Badge tone={s.phone_ready ? 'success' : 'neutral'}>{s.phone_ready ? 'Phone ready' : 'Phone not set up'}</Badge>
+      {vs && <Badge tone="neutral"><AudioLines className="size-3" />{`Voice: ${stackLabel(vs.stt)} · ${stackLabel(vs.llm)} · ${stackLabel(vs.tts)} (${vs.source})`}</Badge>}
       <div className="flex-1" />
       <Button size="sm" onClick={() => act('test', () => post('/api/app-settings/test', { what: 'dograh' }))} loading={busy === 'test'}><PlugZap className="size-3.5" />Test connection</Button>
       <Button size="sm" onClick={() => act('agents', async () => { const r = await post<{ agents: { agent: string; status: string }[] }>('/api/app-settings/create-agents', {}); return { message: r.agents.map(a => `${a.agent}: ${a.status}`).join(' · ') }; })} loading={busy === 'agents'}>Create the AI agents</Button>

@@ -717,7 +717,7 @@ export function createSuite(ctx) {
       try { const l = await dograhApi('GET', phoneBase()); const items = l.configurations || l.items || (Array.isArray(l) ? l : []); out.phone_providers = items.map(c => ({ id: c.id, name: c.name, provider: c.provider, numbers: c.phone_number_count ?? 0, default: c.is_default_outbound })); } catch (e) { out.phone_error = e.message; }
       const caps = await dograhCaps();
       out.build = caps.voice_override ? 'voice-engine' : 'standard'; out.version = caps.version;
-      if (!caps.voice_override) return ok(out); // standard Dograh keeps its model settings in its own dashboard
+      if (!caps.voice_override) { out.voice_stack = await dograh.voiceStack(); return ok(out); } // standard Dograh keeps its model settings in its own dashboard
       try { const c = await dograhApi('GET', '/api/v1/user/configurations/user'); const r = c.realtime || {}; out.voice_model = { provider: r.provider || null, voice: r.voice || null, key_set: Boolean(r.api_key), realtime: c.is_realtime ?? null }; } catch (e) { out.model_error = e.message; }
       return ok(out);
     }

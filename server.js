@@ -65,7 +65,7 @@ suite = createSuite({
   db, send, body: readJson, J: json, jobRow: candidates.jobRow, candidateFull: candidates.full, logEvent: candidates.logEvent, addActivity: candidates.addActivity,
   rescore: cid => candidates.rescore(cid, 'suite'), latestAnswers: candidates.latestAnswers, scoreCandidate, screeningContext, llm,
   dograhCall: (agent, phone, ctx) => dograh.call(agent, phone, ctx),
-  dograh: { roleAgent: dograh.roleAgent, syncRoleAgents: dograh.syncRoleAgents, phoneReady: () => DOGRAH.phoneReady, get agentUuid() { return DOGRAH.agentUuid; }, get refAgentUuid() { return DOGRAH.refAgentUuid; }, get reminderAgentUuid() { return DOGRAH.reminderAgentUuid; }, get rejectionAgentUuid() { return DOGRAH.rejectionAgentUuid; } },
+  dograh: { roleAgent: dograh.roleAgent, syncRoleAgents: dograh.syncRoleAgents, voiceStack: dograh.voiceStack, phoneReady: () => DOGRAH.phoneReady, get agentUuid() { return DOGRAH.agentUuid; }, get refAgentUuid() { return DOGRAH.refAgentUuid; }, get reminderAgentUuid() { return DOGRAH.reminderAgentUuid; }, get rejectionAgentUuid() { return DOGRAH.rejectionAgentUuid; } },
   settings, dograhApi: (m, p, b) => dograh.api(m, p, b, { idempotent: m === 'GET' }), createAgents: dograh.createAgents, dograhCaps: dograh.caps,
 });
 const core = coreRoutes({ db, candidates, interviews, dograh, relay, hooks });

@@ -1,3 +1,14 @@
+# Low-cost voice stack (Deepgram + Groq + Rumik)
+
+Calls can run on our own provider keys instead of Dograh's bundled models (about Rs 6.2 per minute). Branch: `feat/voice-stack`.
+
+- **Rumik Silk in Dograh.** `dograh/overlay/rumik` builds `local/dograh-api:voicelink-rumik` (see its README). It also fixes a pipecat-rumik 0.1.4 import that would stop the Dograh API from starting.
+- **One command to apply.** `npm run voice:setup` creates or updates the Dograh provider connections ("Hirevox Deepgram", "Hirevox Groq", "Hirevox Rumik") and the model configuration "Hirevox voice: Deepgram + Groq + Rumik". It applies it to one workflow with `--workflow=<id>`, removes it with `--off`, or makes it the organisation default with `--default`. Re-running rotates keys and never duplicates.
+- **Defaults.** Deepgram `nova-3-general` with `multi` (English and Hindi code-switching), Groq `openai/gpt-oss-120b` (Llama 3.3 70B is no longer offered on Groq), and Rumik `mulberry` with a voice description.
+- **Visible in Hirevox.** `GET /api/app-settings/dograh-status` reports `voice_stack` (which configuration the screener uses), and the settings page shows it. Role copies of the screener inherit the stack.
+- **Text AI fix.** Groq retired `llama-3.1-8b-instant`, so every Groq text call was failing over to the next provider. The default is now `openai/gpt-oss-20b` with low reasoning effort.
+- **Groq free tier is not enough for calls.** It allows 8,000 tokens per minute on gpt-oss-120b, and one call uses about 7,000 to 9,000. Use the Dev tier (pay as you go) before real calls.
+
 # Screening agent v2
 
 The screening agent was rebuilt so a call takes about 6 minutes, uses far fewer tokens, sounds like a colleague and collects evidence on whether the candidate's experience is real. Branch: `screening-v2`.
