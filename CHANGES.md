@@ -1,3 +1,11 @@
+# Groq Whisper as the ear
+
+`npm run voice:setup -- --ear=groq [--llm=dograh]` uses Groq's hosted Whisper (`whisper-large-v3-turbo`) through Dograh's OpenAI-compatible speech-to-text, in place of Deepgram. Branch: `feat/groq-whisper-ear`.
+
+- **Measured** on a 7.5 min phone call (run 318): 48 transcription requests, 140 s of caller audio billed (31% of the call), no rate-limit errors.
+- **Free tier:** 2,000 requests a day, about 40 calls of this length. It is the binding limit (audio is 7,200 s an hour). Paid: about Rs 0.14 for that call, against about Rs 3.90 on Deepgram.
+- **Weaknesses seen:** Whisper invents "Thank you." on silence or noise, misheard words lost the salary answer, and transcription only starts after the caller stops speaking.
+
 # Screening prompt: fixes from the 16 Nov test calls
 
 Targeted edits to the original prompt (`dograh/workflow.json`, copy in `screener-prompt.txt`). The flow and persona are unchanged. Branch: `fix/screener-call-feedback`.
