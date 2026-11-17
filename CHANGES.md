@@ -1,3 +1,7 @@
+# Dograh's own ear (measured: not free)
+
+`npm run voice:setup -- --ear=dograh --llm=dograh` puts Dograh's speech-to-text (Flux multilingual, English + Hindi hints) in front of Dograh's brain and Rumik. Measured on run 319: 193 s used 22.52 Dograh credits, about 7 credits a minute (about Rs 6/min). Using any Dograh voice service starts Dograh's per-minute billing, while Dograh's brain on its own has cost 0 credits on 4 calls. Deepgram (about Rs 0.51/min) stays the default ear. Branch: `feat/dograh-ear`.
+
 # Groq Whisper as the ear
 
 `npm run voice:setup -- --ear=groq [--llm=dograh]` uses Groq's hosted Whisper (`whisper-large-v3-turbo`) through Dograh's OpenAI-compatible speech-to-text, in place of Deepgram. Branch: `feat/groq-whisper-ear`.

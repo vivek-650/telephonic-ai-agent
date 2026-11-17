@@ -27,7 +27,8 @@ const DOGRAH_LLM = arg('llm') === 'dograh';
 // caller turn after they stop speaking (not live), so only caller speech is billed; free up to 7,200 audio seconds an
 // hour and 2,000 requests a day per account, then about $0.04 an audio hour.
 const GROQ_EAR = arg('ear') === 'groq';
-export const CONFIG_NAME = `Hirevox voice: ${GROQ_EAR ? 'Groq Whisper' : 'Deepgram'} + ${DOGRAH_LLM ? 'Dograh AI' : 'Groq'} + Rumik`;
+const DOGRAH_EAR = arg('ear') === 'dograh'; // Dograh's own speech-to-text (Flux multilingual), billed in Dograh credits
+export const CONFIG_NAME = `Hirevox voice: ${GROQ_EAR ? 'Groq Whisper' : DOGRAH_EAR ? 'Dograh ear' : 'Deepgram'} + ${DOGRAH_LLM ? 'Dograh AI' : 'Groq'} + Rumik`;
 
 async function call(method, p, body) {
   const r = await fetch(`${DOGRAH.base}${p}`, { method, headers: { 'Content-Type': 'application/json', 'X-API-Key': DOGRAH.apiKey }, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(30000) });
@@ -50,7 +51,7 @@ const VENDORS = [
       model: env('RUMIK_MODEL', 'mulberry'), voice: env('RUMIK_VOICE', 'speaker_2'), // a fixed speaker keeps the voice the same on every reply
       description: env('RUMIK_DESCRIPTION', "a warm, clear young Indian woman's voice, friendly and professional, natural conversational pace, speaking Indian English and Hinglish"),
     } },
-].filter(v => !(DOGRAH_LLM && v.role === 'llm'));
+].filter(v => !(DOGRAH_LLM && v.role === 'llm') && !(DOGRAH_EAR && v.role === 'stt'));
 
 if (!DOGRAH.base || !DOGRAH.apiKey) throw new Error('Set DOGRAH_BASE_URL and DOGRAH_API_KEY first.');
 const missing = VENDORS.filter(v => !env(v.key)).map(v => v.key);
@@ -76,6 +77,11 @@ for (const v of VENDORS) {
 // 2. One named configuration. Embeddings stay on Dograh (only used by knowledge-base agents).
 const configs = await call('GET', `${MC}/model-configurations`);
 const orgDefault = configs.find(c => c.name === 'Organization default');
+if (DOGRAH_EAR) {
+  if (!orgDefault?.configuration?.stt) throw new Error('No "Organization default" configuration with a Dograh ear to reuse.');
+  selection.stt = { ...orgDefault.configuration.stt, settings: { language: 'multi', language_hints: ['en', 'hi'] } };
+  console.log('Ear: Dograh speech-to-text from the organisation default (English + Hindi hints)');
+}
 if (DOGRAH_LLM) {
   if (!orgDefault?.configuration?.llm) throw new Error('No "Organization default" configuration with a Dograh model to reuse.');
   selection.llm = orgDefault.configuration.llm;
