@@ -23,7 +23,11 @@ loadEnvFile(ROOT);
 const arg = k => process.argv.find(a => a === `--${k}` || a.startsWith(`--${k}=`))?.split('=')[1] ?? (process.argv.includes(`--${k}`) ? true : undefined);
 const env = (k, d = '') => String(process.env[k] ?? d).trim();
 const DOGRAH_LLM = arg('llm') === 'dograh';
-export const CONFIG_NAME = DOGRAH_LLM ? 'Hirevox voice: Deepgram + Dograh AI + Rumik' : 'Hirevox voice: Deepgram + Groq + Rumik';
+// --ear=groq: Groq's hosted Whisper as the ear, through Dograh's OpenAI-compatible speech-to-text. It transcribes each
+// caller turn after they stop speaking (not live), so only caller speech is billed; free up to 7,200 audio seconds an
+// hour and 2,000 requests a day per account, then about $0.04 an audio hour.
+const GROQ_EAR = arg('ear') === 'groq';
+export const CONFIG_NAME = `Hirevox voice: ${GROQ_EAR ? 'Groq Whisper' : 'Deepgram'} + ${DOGRAH_LLM ? 'Dograh AI' : 'Groq'} + Rumik`;
 
 async function call(method, p, body) {
   const r = await fetch(`${DOGRAH.base}${p}`, { method, headers: { 'Content-Type': 'application/json', 'X-API-Key': DOGRAH.apiKey }, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(30000) });
@@ -34,8 +38,11 @@ async function call(method, p, body) {
 
 const MC = '/api/v1/model-connections';
 const VENDORS = [
-  { role: 'stt', name: 'Hirevox Deepgram', provider: 'deepgram', key: 'DEEPGRAM_API_KEY',
-    settings: { model: env('DEEPGRAM_MODEL', 'nova-3-general'), language: env('DEEPGRAM_LANGUAGE', 'multi') } },
+  GROQ_EAR
+    ? { role: 'stt', name: 'Hirevox Groq Whisper', provider: 'openai', key: process.env.VOICE_GROQ_API_KEY ? 'VOICE_GROQ_API_KEY' : 'GROQ_API_KEY',
+      connection: { base_url: 'https://api.groq.com/openai/v1' }, settings: { model: env('GROQ_STT_MODEL', 'whisper-large-v3-turbo') } }
+    : { role: 'stt', name: 'Hirevox Deepgram', provider: 'deepgram', key: 'DEEPGRAM_API_KEY',
+      settings: { model: env('DEEPGRAM_MODEL', 'nova-3-general'), language: env('DEEPGRAM_LANGUAGE', 'multi') } },
   { role: 'llm', name: 'Hirevox Groq', provider: 'groq', key: process.env.VOICE_GROQ_API_KEY ? 'VOICE_GROQ_API_KEY' : 'GROQ_API_KEY',
     settings: { model: env('VOICE_LLM_MODEL', 'openai/gpt-oss-120b'), temperature: Number(env('VOICE_LLM_TEMPERATURE', '0.3')) } },
   { role: 'tts', name: 'Hirevox Rumik', provider: 'rumik', key: 'RUMIK_API_KEY',
@@ -59,8 +66,8 @@ for (const v of VENDORS) {
   const credentials = { api_key: env(v.key) };
   const found = existing.find(c => c.name === v.name && c.provider === v.provider);
   const conn = found
-    ? await call('PATCH', `${MC}/provider-connections/${found.uuid}`, { credentials, revision: found.revision })
-    : await call('POST', `${MC}/provider-connections`, { name: v.name, provider: v.provider, credentials });
+    ? await call('PATCH', `${MC}/provider-connections/${found.uuid}`, { credentials, ...(v.connection ? { connection_settings: v.connection } : {}), revision: found.revision })
+    : await call('POST', `${MC}/provider-connections`, { name: v.name, provider: v.provider, credentials, ...(v.connection ? { connection_settings: v.connection } : {}) });
   const settings = Object.fromEntries(Object.entries(v.settings).filter(([, x]) => x !== '' && !Number.isNaN(x)));
   selection[v.role] = { provider_connection_uuid: conn.uuid, settings };
   console.log(`${found ? 'Updated' : 'Created'} connection ${v.name} (${v.provider}): ${JSON.stringify(settings)}`);
