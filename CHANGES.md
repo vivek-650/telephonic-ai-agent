@@ -1,3 +1,11 @@
+# Oogam (Naad TTS) as the mouth
+
+`npm run voice:setup -- --llm=dograh --mouth=oogam [--workflow=<id>]` builds "Deepgram + Dograh AI + Oogam". Oogam is added to Dograh by a new overlay, `dograh/overlay/oogam` (image `local/dograh-api:voicelink-rumik-oogam`, `pipecat-oogam==0.2.1` pinned by hash). Branch: `feat/oogam-tts`.
+
+- **Price (measured):** Rs 3.00 per 1,000 characters (300 paise from `GET /v1/voices`; a 63-character line billed 19 paise). Rumik mulberry is Rs 0.50.
+- **Voices on the account:** aditi and arjun (Hindi), kabir (Gujarati), kavya (Tamil). The language is a separate 3-letter setting (`GUJ`, `HIN`, `ENG`), and Roman-letter text is read in it.
+- The RecruitX outreach agent (workflow 11) runs on it for the browser test. `scripts/setup-outreach.mjs` still defaults to the Rumik stack: pass `--stack="Hirevox voice: Deepgram + Dograh AI + Oogam"` to keep Oogam.
+
 # Dograh's own ear (measured: not free)
 
 `npm run voice:setup -- --ear=dograh --llm=dograh` puts Dograh's speech-to-text (Flux multilingual, English + Hindi hints) in front of Dograh's brain and Rumik. Measured on run 319: 193 s used 22.52 Dograh credits, about 7 credits a minute (about Rs 6/min). Using any Dograh voice service starts Dograh's per-minute billing, while Dograh's brain on its own has cost 0 credits on 4 calls. Deepgram (about Rs 0.51/min) stays the default ear. Branch: `feat/dograh-ear`.

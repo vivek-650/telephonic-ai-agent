@@ -8,6 +8,8 @@
 //   node scripts/setup-voice-stack.mjs --default            make it the organisation default (every agent)
 //   add --llm=dograh to keep Dograh's own AI model as the brain (Deepgram + Dograh + Rumik): any prompt size works,
 //   and Dograh credits are charged for the brain only. That is a separate configuration, so both can exist.
+//   add --mouth=oogam to speak with Oogam Naad TTS instead of Rumik (OOGAM_API_KEY, OOGAM_VOICE, OOGAM_LANGUAGE). Needs the
+//   overlay image from dograh/overlay/oogam. Also a separate configuration.
 //
 // Groq free tier: 8,000 tokens per minute and 1,000 requests a day, per model, and cached tokens still count. Every
 // reply resends the whole prompt, so the screener prompt (~6,000 tokens) fits about one reply a minute there. On a
@@ -28,7 +30,9 @@ const DOGRAH_LLM = arg('llm') === 'dograh';
 // hour and 2,000 requests a day per account, then about $0.04 an audio hour.
 const GROQ_EAR = arg('ear') === 'groq';
 const DOGRAH_EAR = arg('ear') === 'dograh'; // Dograh's own speech-to-text (Flux multilingual), billed in Dograh credits
-export const CONFIG_NAME = `Hirevox voice: ${GROQ_EAR ? 'Groq Whisper' : DOGRAH_EAR ? 'Dograh ear' : 'Deepgram'} + ${DOGRAH_LLM ? 'Dograh AI' : 'Groq'} + Rumik`;
+// --mouth=oogam: Oogam Naad TTS (streams 24 kHz PCM). It reads Roman-letter text in the configured 3-letter language.
+const OOGAM_MOUTH = arg('mouth') === 'oogam';
+export const CONFIG_NAME = `Hirevox voice: ${GROQ_EAR ? 'Groq Whisper' : DOGRAH_EAR ? 'Dograh ear' : 'Deepgram'} + ${DOGRAH_LLM ? 'Dograh AI' : 'Groq'} + ${OOGAM_MOUTH ? 'Oogam' : 'Rumik'}`;
 
 async function call(method, p, body) {
   const r = await fetch(`${DOGRAH.base}${p}`, { method, headers: { 'Content-Type': 'application/json', 'X-API-Key': DOGRAH.apiKey }, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(30000) });
@@ -46,7 +50,10 @@ const VENDORS = [
       settings: { model: env('DEEPGRAM_MODEL', 'nova-3-general'), language: env('DEEPGRAM_LANGUAGE', 'multi') } },
   { role: 'llm', name: 'Hirevox Groq', provider: 'groq', key: process.env.VOICE_GROQ_API_KEY ? 'VOICE_GROQ_API_KEY' : 'GROQ_API_KEY',
     settings: { model: env('VOICE_LLM_MODEL', 'openai/gpt-oss-120b'), temperature: Number(env('VOICE_LLM_TEMPERATURE', '0.3')) } },
-  { role: 'tts', name: 'Hirevox Rumik', provider: 'rumik', key: 'RUMIK_API_KEY',
+  OOGAM_MOUTH
+    ? { role: 'tts', name: 'Hirevox Oogam', provider: 'oogam', key: 'OOGAM_API_KEY',
+      settings: { model: env('OOGAM_MODEL', 'naad-tts-v2'), voice: env('OOGAM_VOICE', 'aditi'), language: env('OOGAM_LANGUAGE', 'GUJ') } }
+    : { role: 'tts', name: 'Hirevox Rumik', provider: 'rumik', key: 'RUMIK_API_KEY',
     settings: {
       model: env('RUMIK_MODEL', 'mulberry'), voice: env('RUMIK_VOICE', 'speaker_2'), // a fixed speaker keeps the voice the same on every reply
       description: env('RUMIK_DESCRIPTION', "a warm, clear young Indian woman's voice, friendly and professional, natural conversational pace, speaking Indian English and Hinglish"),
@@ -59,6 +66,7 @@ if (missing.length) throw new Error(`Add ${missing.join(', ')} to .env first.`);
 
 const catalog = await call('GET', `${MC}/catalog`);
 if (!JSON.stringify(catalog).includes('"rumik"')) throw new Error('Dograh does not know Rumik: run the overlay image from dograh/overlay/rumik (see its README).');
+if (OOGAM_MOUTH && !JSON.stringify(catalog).includes('"oogam"')) throw new Error('Dograh does not know Oogam: run the overlay image from dograh/overlay/oogam (see its README).');
 
 // 1. Provider connections, matched by name, so re-running rotates keys instead of duplicating.
 const existing = await call('GET', `${MC}/provider-connections`);
