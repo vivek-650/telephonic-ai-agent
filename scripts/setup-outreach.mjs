@@ -27,7 +27,10 @@ const definition = {
     {
       id: 'start', type: 'startCall', position: { x: 0, y: 0 },
       data: {
-        name: 'Outreach', prompt: readFileSync(path.join(ROOT, 'dograh', 'outreach', 'partner-outreach-prompt.txt'), 'utf8').trim(),
+        // spoken the moment the call is answered, without waiting for an AI reply (dograh/outreach/opening-lines.mjs)
+        name: 'Outreach', greeting_type: 'text', greeting: '{{opening_line | fallback:Hello, shu hu tamari agency sathe vaat kari rahi chu?}}',
+        allow_greeting_interrupt: true, greeting_interrupt_min_words: 2,
+        prompt: readFileSync(path.join(ROOT, 'dograh', 'outreach', 'partner-outreach-prompt.txt'), 'utf8').trim(),
         allow_interrupt: true, add_global_prompt: false, extraction_enabled: true,
         extraction_prompt: 'Extract only what was actually said on the call. Use an empty value or false when it was not discussed; never guess.',
         extraction_variables: [
