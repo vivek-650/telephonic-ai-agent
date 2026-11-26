@@ -8,6 +8,7 @@
 //   node scripts/setup-voice-stack.mjs --default            make it the organisation default (every agent)
 //   add --llm=dograh to keep Dograh's own AI model as the brain (Deepgram + Dograh + Rumik): any prompt size works,
 //   and Dograh credits are charged for the brain only. That is a separate configuration, so both can exist.
+//   Its tier comes from DOGRAH_LLM_MODEL (default "fast"; "default" is a slower reasoning model).
 //   add --mouth=oogam to speak with Oogam Naad TTS instead of Rumik (OOGAM_API_KEY, OOGAM_VOICE, OOGAM_LANGUAGE). Needs the
 //   overlay image from dograh/overlay/oogam. Also a separate configuration.
 //
@@ -92,8 +93,11 @@ if (DOGRAH_EAR) {
 }
 if (DOGRAH_LLM) {
   if (!orgDefault?.configuration?.llm) throw new Error('No "Organization default" configuration with a Dograh model to reuse.');
-  selection.llm = orgDefault.configuration.llm;
-  console.log('Brain: Dograh model from the organisation default');
+  // Tier "fast" by default: on the outreach conversation it answers in 0.43 s (median) against 1.05 s for "default",
+  // which is a reasoning model and was the largest part of every reply's delay (26 Nov 2026 latency analysis).
+  const tier = env('DOGRAH_LLM_MODEL', 'fast');
+  selection.llm = { ...orgDefault.configuration.llm, settings: { ...(orgDefault.configuration.llm.settings || {}), model: tier } };
+  console.log(`Brain: Dograh model, tier "${tier}" (DOGRAH_LLM_MODEL)`);
 }
 const fallbackModel = DOGRAH_LLM ? '' : env('VOICE_LLM_FALLBACK_MODEL', 'openai/gpt-oss-20b');
 const llm_fallback = fallbackModel && fallbackModel !== selection.llm.settings.model
